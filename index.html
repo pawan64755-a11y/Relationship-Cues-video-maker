@@ -147,7 +147,7 @@
       <div class="card-head"><span class="step">01</span><h2>Video/Image upload</h2></div>
       <details>
         <summary>Kaise kaam karta hai</summary>
-        <p>Video aur image dono ek saath select kar sakte ho, jis order mein select karo usi order mein judenge. Har image max ~5-6s dikhegi. Total max 59s.</p>
+        <p>Video aur image dono ek saath select kar sakte ho, jis order mein select karo usi order mein judenge. Agar audio track attach nahi hai to har image ~5-6s dikhegi (total max 59s). Agar audio attach ho jaaye to yeh limit hat jaati hai — audio ki poori (core) length images mein barabar baant di jaati hai, aur video ko us duration ke hisaab se fast/slow (speed adjust) kar diya jaata hai, taaki audio kabhi bhi cut ya compromise na ho.</p>
       </details>
       <label class="file-drop" for="mediaInput">
         <span id="dropLabel">Video/Image choose karein (multiple)</span>
@@ -162,7 +162,7 @@
       <div class="card-head"><span class="step">02</span><h2>Caption — type karein ya audio se auto</h2></div>
       <details>
         <summary>Kaise kaam karta hai</summary>
-        <p>Text khud likho, ya English audio (voiceover) attach karo — transcript + har word ka exact timing auto-generate hoga. Audio attach karne par woh export ki soundtrack bhi ban jaati hai.</p>
+        <p>Text khud likho, ya English audio (voiceover) attach karo — transcript + har word ka exact timing auto-generate hoga. Audio attach karne par woh export ki soundtrack ban jaati hai (shuru aur end mein 1-1 second ka silent pad apne aap add ho jaata hai), aur attached video/images us audio ki poori length ke hisaab se automatically adjust ho jaate hain.</p>
       </details>
       <label class="file-drop" for="audioInput">
         <span id="audioDropLabel">Audio track (optional, auto-transcribe)</span>
@@ -204,7 +204,11 @@
   const HIGHLIGHT_COLOR = '#3EE8AE';
   const MAX_WORDS_PER_CHUNK = 9;
   const IMAGE_MIN_SEC = 5, IMAGE_MAX_SEC = 6;
+  const IMAGE_REF_WEIGHT = (IMAGE_MIN_SEC + IMAGE_MAX_SEC) / 2; // reference "weight" used to split narration-driven duration evenly between images
   const TRANSITION_SEC = 0.4;
+  const AUDIO_LEAD_PAD = 1;   // silent second added before narration starts
+  const AUDIO_TAIL_PAD = 1;   // silent second added after narration ends
+  const VIDEO_RATE_MIN = 0.25, VIDEO_RATE_MAX = 4; // safety clamp when speeding up/slowing a video to match narration
 
   // Ken Burns movement combinations (>= 9 distinct patterns). Pan amplitude here is chosen
   // to match the crop margin available at the scale used, so the image genuinely travels
@@ -305,14 +309,17 @@
 
   const narrationAudio = document.createElement('audio');
   narrationAudio.preload = 'auto';
-  let narrationDuration = 0;
-  let wordTimestamps = null;   // [{text, start, end}] from auto-transcription, null = manual/uniform timing
+  let narrationDuration = 0;   // core (unpadded) narration length in seconds — the actual speech duration
+  let wordTimestamps = null;   // [{text, start, end}] from auto-transcription, null = manual/uniform timing; timestamps are offset by AUDIO_LEAD_PAD to line up with the padded playback track
+  let displayClips = [];       // the real media clips shown in the clip-list UI (excludes the synthetic lead/tail freeze pads)
   let transcribing = false;
   let effectiveMaxSeconds = MAX_TOTAL_SECONDS;
   let rawClipsCache = null;
   let whisperPipelinePromise = null;
 
-  let clips = [];          // {type:'video'|'image', file, url, name, rawDuration, usedDuration, trimmed, img, comboIdx}
+  let clips = [];          // {type:'video'|'image'|'freeze', file, url, name, rawDuration, usedDuration, trimmed, img, comboIdx, playbackRate}
+                            // 'freeze' clips are synthetic — they hold a still frame (from the first/last real clip) while the
+                            // AUDIO_LEAD_PAD/AUDIO_TAIL_PAD silence plays; they never appear in displayClips/the UI clip list.
   let effectiveDuration = 0;
   let currentClipIdx = 0;
   let globalElapsedBase = 0;
@@ -405,39 +412,29 @@
   });
 
   function finalizeClips(rawClips){
-    let cum = 0;
-    const finalClips = [];
     lastComboIdx = -1;
-    rawClips.forEach(c => {
-      const remaining = effectiveMaxSeconds - cum;
-      if(remaining <= 0.02) return;
-      const used = Math.min(c.rawDuration, remaining);
-      const clip = {
-        type: c.type, file: c.file, url: c.url, name: c.name,
-        rawDuration: c.rawDuration, usedDuration: used,
-        trimmed: used < c.rawDuration - 0.02,
-        img: c.img, comboIdx: c.type === 'image' ? pickCombo() : -1
-      };
-      finalClips.push(clip);
-      cum += used;
-    });
+    const narrationActive = !!narrationAudio.src && narrationDuration > 0;
 
-    // If a narration track is longer than the combined visual clips, hold the last clip
-    // (freeze its final Ken Burns position for video / keep panning for image) so the
-    // visuals cover the whole narration instead of ending early.
-    if(finalClips.length && cum < effectiveMaxSeconds - 0.05){
-      const gap = effectiveMaxSeconds - cum;
-      finalClips[finalClips.length - 1].usedDuration += gap;
-      cum = effectiveMaxSeconds;
+    const finalClips = narrationActive ? distributeClipsAcrossNarration(rawClips) : trimClipsToFit(rawClips);
+    displayClips = finalClips;
+
+    // Wrap with silent lead/tail freeze pads so the padded 1s of silence at each end of the
+    // narration audio still shows a held frame instead of jump-cutting straight into content.
+    if(narrationActive && finalClips.length){
+      const leadPad = makeFreezePad(finalClips[0], 'start', AUDIO_LEAD_PAD);
+      const tailPad = makeFreezePad(finalClips[finalClips.length - 1], 'end', AUDIO_TAIL_PAD);
+      clips = [leadPad, ...finalClips, tailPad];
+      effectiveDuration = AUDIO_LEAD_PAD + finalClips.reduce((s,c) => s + c.usedDuration, 0) + AUDIO_TAIL_PAD;
+    } else {
+      clips = finalClips;
+      effectiveDuration = finalClips.reduce((s,c) => s + c.usedDuration, 0);
     }
 
-    clips = finalClips;
-    effectiveDuration = cum;
     currentClipIdx = 0;
     globalElapsedBase = 0;
     hasClips = clips.length > 0;
 
-    dropLabel.textContent = clips.length + ' clip(s) attached';
+    dropLabel.textContent = displayClips.length + ' clip(s) attached';
     renderClipList(rawClips.length);
 
     if(hasClips){
@@ -448,9 +445,84 @@
     updateExportReady();
   }
 
+  // No narration track attached: old behaviour — play clips back to back, trimming/holding
+  // the last one to fit inside MAX_TOTAL_SECONDS.
+  function trimClipsToFit(rawClips){
+    let cum = 0;
+    const finalClips = [];
+    rawClips.forEach(c => {
+      const remaining = effectiveMaxSeconds - cum;
+      if(remaining <= 0.02) return;
+      const used = Math.min(c.rawDuration, remaining);
+      finalClips.push({
+        type: c.type, file: c.file, url: c.url, name: c.name,
+        rawDuration: c.rawDuration, usedDuration: used, playbackRate: 1,
+        trimmed: used < c.rawDuration - 0.02,
+        img: c.img, comboIdx: c.type === 'image' ? pickCombo() : -1
+      });
+      cum += used;
+    });
+    if(finalClips.length && cum < effectiveMaxSeconds - 0.05){
+      finalClips[finalClips.length - 1].usedDuration += (effectiveMaxSeconds - cum);
+    }
+    return finalClips;
+  }
+
+  // Narration track attached: no compromise on audio length — every attached clip is kept,
+  // and the narration's core (unpadded) duration is split across all of them so the full
+  // audio always plays start to finish. Images split that time evenly between them; a video
+  // is instead sped up or slowed down (playbackRate) to exactly fill its share, rather than
+  // being trimmed or held frozen.
+  function distributeClipsAcrossNarration(rawClips){
+    const coreDuration = Math.max(0.1, effectiveMaxSeconds - AUDIO_LEAD_PAD - AUDIO_TAIL_PAD);
+    const usable = rawClips.filter(c => c.rawDuration > 0 || c.type === 'image');
+    if(!usable.length) return [];
+
+    const weights = usable.map(c => c.type === 'video' ? Math.max(0.5, c.rawDuration) : IMAGE_REF_WEIGHT);
+    const totalWeight = weights.reduce((s,w) => s+w, 0);
+
+    const finalClips = usable.map((c, i) => {
+      const allocated = coreDuration * (weights[i] / totalWeight);
+      if(c.type === 'video'){
+        let rate = c.rawDuration / allocated;
+        rate = Math.max(VIDEO_RATE_MIN, Math.min(VIDEO_RATE_MAX, rate));
+        const used = c.rawDuration / rate; // recompute in case the rate got clamped
+        return {
+          type: 'video', file: c.file, url: c.url, name: c.name,
+          rawDuration: c.rawDuration, usedDuration: used, playbackRate: rate,
+          trimmed: false, img: null, comboIdx: -1
+        };
+      }
+      return {
+        type: 'image', file: c.file, url: c.url, name: c.name,
+        rawDuration: c.rawDuration, usedDuration: allocated, playbackRate: 1,
+        trimmed: false, img: c.img, comboIdx: pickCombo()
+      };
+    });
+
+    // A clamped video rate can leave the total a touch short/long of coreDuration —
+    // absorb that on the last clip (if it's an image) so the full narration is still covered exactly.
+    const cum = finalClips.reduce((s,c) => s + c.usedDuration, 0);
+    const drift = coreDuration - cum;
+    if(finalClips.length && Math.abs(drift) > 0.02 && finalClips[finalClips.length-1].type === 'image'){
+      finalClips[finalClips.length - 1].usedDuration = Math.max(0.3, finalClips[finalClips.length - 1].usedDuration + drift);
+    }
+
+    return finalClips;
+  }
+
+  function makeFreezePad(refClip, freezeAt, duration){
+    return {
+      type: 'freeze', refClip: refClip, freezeAt: freezeAt,
+      file: refClip.file, url: refClip.url, name: '(pad)',
+      rawDuration: duration, usedDuration: duration, playbackRate: 1,
+      trimmed: false, img: refClip.img, comboIdx: refClip.comboIdx
+    };
+  }
+
   function renderClipList(rawCount){
     clipListEl.innerHTML = '';
-    clips.forEach(c => {
+    displayClips.forEach(c => {
       const li = document.createElement('li');
       if(c.trimmed) li.className = 'trimmed';
       const nameSpan = document.createElement('span');
@@ -458,14 +530,18 @@
       nameSpan.textContent = (c.type === 'image' ? '🖼 ' : '🎬 ') + c.name;
       const durSpan = document.createElement('span');
       durSpan.className = 'cdur';
-      durSpan.textContent = c.trimmed ? (fmtTime(c.usedDuration) + ' (trimmed)') : fmtTime(c.usedDuration);
+      let label = c.trimmed ? (fmtTime(c.usedDuration) + ' (trimmed)') : fmtTime(c.usedDuration);
+      if(c.type === 'video' && c.playbackRate && Math.abs(c.playbackRate - 1) > 0.02){
+        label += ' (' + c.playbackRate.toFixed(2) + 'x ' + (c.playbackRate > 1 ? 'fast' : 'slow') + ')';
+      }
+      durSpan.textContent = label;
       li.appendChild(nameSpan);
       li.appendChild(durSpan);
       clipListEl.appendChild(li);
     });
     totalLine.style.display = 'block';
-    totalLine.innerHTML = 'Total used: <strong>' + fmtTime(effectiveDuration) + '</strong> / ' + Math.round(effectiveMaxSeconds) + 's max' + (wordTimestamps ? ' (audio track length se set)' : '');
-    if(rawCount > clips.length || clips.some(c => c.trimmed)){
+    totalLine.innerHTML = 'Total used: <strong>' + fmtTime(effectiveDuration) + '</strong> / ' + Math.round(effectiveMaxSeconds) + 's max' + (wordTimestamps ? ' (audio track length + 1s pad se set)' : '');
+    if(rawCount > displayClips.length || displayClips.some(c => c.trimmed)){
       lengthWarn.style.display = 'block';
       lengthWarn.textContent = 'Combined length ' + Math.round(effectiveMaxSeconds) + ' second se zyaada thi — extra hissa/clips trim/skip kar diye gaye.';
     } else {
@@ -479,16 +555,33 @@
     if(c.type === 'video'){
       video.pause();
       c.videoEndedAt = null;
+      video.playbackRate = c.playbackRate || 1;
       const endedHandler = function(){ c.videoEndedAt = performance.now(); };
       video.addEventListener('ended', endedHandler, { once: true });
       const handler = function(){
         video.removeEventListener('loadeddata', handler);
         video.currentTime = 0;
+        video.playbackRate = c.playbackRate || 1;
         const p = video.play();
         if(p && p.then) p.then(onReady).catch(onReady); else onReady();
       };
       video.addEventListener('loadeddata', handler);
       video.src = c.url;
+      video.load();
+    } else if(c.type === 'freeze' && c.refClip.type === 'video'){
+      // hold a single still frame from the referenced video (first frame for the lead pad,
+      // last frame for the tail pad) while the padded silence plays
+      video.pause();
+      const handler = function(){
+        video.removeEventListener('loadeddata', handler);
+        video.playbackRate = 1;
+        video.currentTime = c.freezeAt === 'start' ? 0 : Math.max(0, c.refClip.rawDuration - 0.08);
+        video.pause();
+        imageClipStartAt = performance.now();
+        if(onReady) onReady();
+      };
+      video.addEventListener('loadeddata', handler);
+      video.src = c.refClip.url;
       video.load();
     } else {
       video.pause();
@@ -555,7 +648,61 @@
     src.start(0);
     const rendered = await offlineCtx.startRendering();
     probeCtx.close();
-    return { data: rendered.getChannelData(0), duration: duration };
+    return { data: rendered.getChannelData(0), duration: duration, original: audioBuffer };
+  }
+
+  // ---------- Pad narration with 1s silence at head + tail, so there's always a held frame
+  // before the voice starts and after it ends — audio length itself is never compromised ----------
+  function padAudioBuffer(buffer){
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const tempCtx = new AudioCtx();
+    const sr = buffer.sampleRate;
+    const leadFrames = Math.round(AUDIO_LEAD_PAD * sr);
+    const tailFrames = Math.round(AUDIO_TAIL_PAD * sr);
+    const totalFrames = leadFrames + buffer.length + tailFrames;
+    const padded = tempCtx.createBuffer(buffer.numberOfChannels, totalFrames, sr);
+    for(let ch = 0; ch < buffer.numberOfChannels; ch++){
+      padded.getChannelData(ch).set(buffer.getChannelData(ch), leadFrames);
+    }
+    tempCtx.close();
+    return padded;
+  }
+
+  function bufferToWav(buffer){
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const numFrames = buffer.length;
+    const blockAlign = numChannels * 2;
+    const dataSize = numFrames * blockAlign;
+    const out = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(out);
+    function writeStr(offset, str){ for(let i=0;i<str.length;i++) view.setUint8(offset+i, str.charCodeAt(i)); }
+    writeStr(0,'RIFF'); view.setUint32(4, 36+dataSize, true); writeStr(8,'WAVE');
+    writeStr(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true);
+    view.setUint16(22,numChannels,true); view.setUint32(24,sampleRate,true);
+    view.setUint32(28,sampleRate*blockAlign,true); view.setUint16(32,blockAlign,true); view.setUint16(34,16,true);
+    writeStr(36,'data'); view.setUint32(40,dataSize,true);
+    const channelData = [];
+    for(let ch=0; ch<numChannels; ch++) channelData.push(buffer.getChannelData(ch));
+    let offset = 44;
+    for(let i=0; i<numFrames; i++){
+      for(let ch=0; ch<numChannels; ch++){
+        let sample = Math.max(-1, Math.min(1, channelData[ch][i]));
+        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(offset, sample, true);
+        offset += 2;
+      }
+    }
+    return new Blob([out], { type: 'audio/wav' });
+  }
+
+  // Whisper returns lowercase transcripts — convert to Proper Case (first letter of every word capitalized)
+  // so the on-screen caption/title doesn't look all-lowercase.
+  function toProperCase(str){
+    return str.split(' ').map(function(w){
+      if(!w) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(' ');
   }
 
   async function transcribeAudioFile(file){
@@ -573,22 +720,24 @@
       transcribeStatus.textContent = 'Transcribe ho raha hai...';
       const output = await transcriber(decoded.data, { return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
       const chunks = output.chunks || [];
+      // +AUDIO_LEAD_PAD shifts every word so it still lines up once we pad the playback track with a silent lead-in second
       wordTimestamps = chunks
         .filter(function(c){ return c.text && c.text.trim(); })
-        .map(function(c){ return { text: c.text.trim(), start: c.timestamp[0], end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) }; });
+        .map(function(c){ return { text: c.text.trim(), start: c.timestamp[0] + AUDIO_LEAD_PAD, end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) + AUDIO_LEAD_PAD }; });
 
-      paragraphInput.value = (output.text || '').trim();
+      paragraphInput.value = toProperCase((output.text || '').trim());
       layoutCache = null;
 
-      effectiveMaxSeconds = Math.min(MAX_TOTAL_SECONDS, narrationDuration);
-      narrationAudio.src = URL.createObjectURL(file);
-      audioGraphReady = false; // rebuild the export audio graph against the narration track
+      effectiveMaxSeconds = Math.min(MAX_TOTAL_SECONDS, AUDIO_LEAD_PAD + narrationDuration + AUDIO_TAIL_PAD);
+      const paddedBuffer = padAudioBuffer(decoded.original);
+      narrationAudio.src = URL.createObjectURL(bufferToWav(paddedBuffer));
+      audioGraphReady = false; // rebuild the export audio graph against the (now padded) narration track
 
       if(rawClipsCache) finalizeClips(rawClipsCache);
 
       audioDropLabel.textContent = file.name + ' attached';
       transcribeStatus.className = 'status-line ready';
-      transcribeStatus.textContent = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ') — neeche text edit bhi kar sakte ho.';
+      transcribeStatus.textContent = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ' + 1s pad har taraf) — neeche text edit bhi kar sakte ho.';
     }catch(err){
       console.error('Transcription failed:', err);
       wordTimestamps = null;
@@ -752,12 +901,17 @@
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, CANVAS_W, CANVAS_H);
   }
 
-  function drawImageFrame(clip){
+  function drawImageFrame(clip, forcedProgress){
     const img = clip.img;
     if(!img) return;
     const combo = KEN_BURNS_COMBOS[clip.comboIdx] || KEN_BURNS_COMBOS[0];
-    const rawProgress = clip.usedDuration > 0 ? Math.min(1, getLocalElapsed()/clip.usedDuration) : 0;
-    const progress = easeInOutCubic(rawProgress);
+    let progress;
+    if(forcedProgress === undefined || forcedProgress === null){
+      const rawProgress = clip.usedDuration > 0 ? Math.min(1, getLocalElapsed()/clip.usedDuration) : 0;
+      progress = easeInOutCubic(rawProgress);
+    } else {
+      progress = forcedProgress;
+    }
 
     const targetAspect = CANVAS_W/CANVAS_H;
     const iw = img.naturalWidth, ih = img.naturalHeight;
@@ -820,6 +974,10 @@
     if(hasClips){
       const clip = clips[currentClipIdx];
       if(clip.type === 'video') drawVideoFrame();
+      else if(clip.type === 'freeze'){
+        if(clip.refClip.type === 'video') drawVideoFrame();
+        else drawImageFrame(clip.refClip, clip.freezeAt === 'start' ? 0 : 1);
+      }
       else drawImageFrame(clip);
     }
 
