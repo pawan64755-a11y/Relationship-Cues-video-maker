@@ -1,909 +1,1047 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<title>Relationship Cues — Card Maker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caption Deck — 4:5 Video + Image Word-Highlight Captions</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0;
-    background: #121212;
-    font-family: 'Poppins', -apple-system, Roboto, 'Segoe UI', sans-serif;
-    color: #fff;
-    height: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
+  :root{
+    --bg:#101116;
+    --panel:#1B1D26;
+    --panel-border:#2B2E3A;
+    --text:#F3F2ED;
+    --muted:#8D8FA0;
+    --accent:#F2B705;
+    --highlight:#3EE8AE;
+    --danger:#E5595C;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
-  .wrap {
-    display: flex;
-    flex-direction: column;
-    max-width: 480px;
-    height: 100dvh;
-    margin: 0 auto;
-    padding: 12px;
-    padding-bottom: 0;
-    overflow: hidden;
-  }
-  h1 {
-    font-size: 15px;
-    text-align: center;
-    margin: 0 0 8px;
-    font-weight: 600;
-    color: #eee;
-    letter-spacing: 0.5px;
-    flex: 0 0 auto;
-  }
-  .canvas-container {
-    position: relative;
-    flex: 0 0 auto;
-    width: auto;
-    height: 42vh;
-    max-height: 380px;
-    max-width: 100%;
-    aspect-ratio: 4 / 5;
-    margin: 0 auto;
-    background: #000;
-    border-radius: 10px;
-    overflow: hidden;
-    touch-action: none;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
-  }
-  canvas#card {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .placeholder-btn {
-    position: absolute;
-    left: 0; right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #888;
-    font-size: 14px;
-    pointer-events: none;
-    text-align: center;
-    padding: 0 20px;
-  }
-  .divider {
-    position: absolute;
-    left: 0; right: 0;
-    height: 32px;
-    margin-top: -16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: ns-resize;
-    z-index: 5;
-  }
-  .divider .bar {
-    width: 50px;
-    height: 6px;
-    background: #4CAF50;
-    border-radius: 3px;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.35);
-  }
-  .hint {
-    font-size: 12px;
-    color: #777;
-    text-align: center;
-    margin-top: 6px;
-    flex: 0 0 auto;
-  }
-  .controls {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 24px;
-  }
-  .row { display: flex; gap: 10px; }
-  button {
-    flex: 1;
-    background: #2b2b2b;
-    color: #fff;
-    border: 1px solid #3a3a3a;
-    border-radius: 10px;
-    padding: 13px 10px;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  button:active { background: #3a3a3a; }
-  button.primary { background: #4CAF50; border-color: #4CAF50; }
-  button.primary:active { background: #43a047; }
-  #saveVideoBtn { background: #1565C0; border-color: #1565C0; }
-  #saveVideoBtn:active { background: #0D47A1; }
-  #saveVideoBtn:disabled { background: #2b2b2b; border-color: #3a3a3a; }
-  textarea {
-    width: 100%;
-    background: #1c1c1c;
-    color: #fff;
-    border: 1px solid #3a3a3a;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 15px;
-    font-family: 'Poppins', sans-serif;
-    text-transform: uppercase;
-    resize: none;
-    min-height: 70px;
-  }
-  label.small {
-    font-size: 13px;
-    color: #aaa;
-    display: flex;
-    justify-content: space-between;
-  }
-  input[type=range] { width: 100%; }
-  #videoInput { display: none; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
-  .swatchRow {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .swatch {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    padding: 0;
-    flex: 0 0 auto;
-    position: relative;
-    box-shadow: 0 0 0 1px #3a3a3a;
-  }
-  .swatch.selected {
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 1px #4CAF50;
-  }
-  .toggleRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #1c1c1c;
-    border: 1px solid #3a3a3a;
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #eee;
-  }
-  .toggleRow input[type=checkbox] {
-    width: 20px;
-    height: 20px;
-    accent-color: #4CAF50;
-  }
-  button:disabled {
-    opacity: 0.4;
-  }
-  .colorPickBtn {
-    flex: 1;
-    background: #2b2b2b;
-    color: #fff;
-    border: 1px solid #3a3a3a;
-    border-radius: 10px;
-    padding: 13px 10px;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-  }
-  .colorPickBtn input[type=color] {
-    width: 26px;
-    height: 26px;
-    border: none;
-    border-radius: 6px;
-    padding: 0;
-    background: none;
-    cursor: pointer;
+  header.top{padding:9px 14px 8px;border-bottom:1px solid var(--panel-border);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  header.top .mark{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;color:var(--highlight);}
+  header.top h1{margin:0;font-size:14px;font-weight:640;letter-spacing:-0.01em;line-height:1.25;}
+  header.top p{margin:0;color:var(--muted);font-size:11px;line-height:1.4;flex:1 1 220px;}
+
+  .app{max-width:1180px;margin:0 auto;padding:12px;display:grid;grid-template-columns:minmax(220px,280px) 1fr;gap:12px;align-items:start;}
+  @media (max-width:860px){ .app{grid-template-columns:1fr;padding:10px;gap:10px;padding-bottom:76px;} header.top{padding:10px;} }
+
+  .stage{position:sticky;top:10px;}
+  @media (max-width:860px){ .stage{position:static;order:-1;} }
+
+  .ratio-switch{display:flex;gap:6px;justify-content:center;margin-bottom:7px;}
+  .ratio-switch .ratio-opt{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--panel-border);color:var(--muted);padding:5px 9px;border-radius:6px;font-size:11px;cursor:pointer;transition:border-color 0.15s,color 0.15s;}
+  .ratio-switch .ratio-opt:hover{border-color:var(--highlight);}
+  .ratio-switch .ratio-opt:has(input:checked){border-color:var(--highlight);color:var(--text);}
+  .ratio-switch input{accent-color:var(--highlight);margin:0;cursor:pointer;}
+
+  .frame-wrap{background:#000;border:1px solid var(--panel-border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/5;width:100%;max-width:220px;margin:0 auto;display:flex;align-items:center;justify-content:center;}
+  @media (max-width:860px){ .frame-wrap{max-width:170px;} }
+  canvas#stageCanvas{width:100%;height:100%;display:block;}
+  .frame-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:11px;text-align:center;padding:12px;}
+  .frame-empty .icon{font-family:var(--mono);font-size:18px;color:var(--panel-border);}
+
+  .transport{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:7px;}
+  .transport button{background:var(--panel);border:1px solid var(--panel-border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;}
+  .transport button:hover:not(:disabled){border-color:var(--highlight);}
+  .transport button:disabled{opacity:0.35;cursor:not-allowed;}
+  .timecode{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:80px;text-align:center;}
+
+  .panel{display:flex;flex-direction:column;gap:8px;}
+  .card{background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;padding:10px 11px;}
+  .card-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .card .step{font-family:var(--mono);font-size:9px;color:var(--highlight);letter-spacing:0.06em;flex:none;}
+  .card h2{margin:0;font-size:12.5px;font-weight:620;line-height:1.25;}
+  .card .hint{margin:0 0 7px;color:var(--muted);font-size:10.5px;line-height:1.35;}
+  .card details{margin:-2px 0 7px;}
+  .card summary{list-style:none;cursor:pointer;font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;}
+  .card summary::-webkit-details-marker{display:none;}
+  .card summary:before{content:"ⓘ";color:var(--highlight);}
+  .card details[open] summary{margin-bottom:4px;}
+  .card details p{margin:0;color:var(--muted);font-size:10.5px;line-height:1.4;}
+
+  .file-drop{border:1px dashed var(--panel-border);border-radius:7px;padding:9px;text-align:center;cursor:pointer;font-size:11.5px;color:var(--muted);transition:border-color 0.15s;}
+  .file-drop:hover{border-color:var(--highlight);}
+  .file-drop input{display:none;}
+
+  .clip-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;}
+  .clip-list li{display:flex;justify-content:space-between;gap:8px;background:#14151C;border:1px solid var(--panel-border);border-radius:6px;padding:5px 8px;font-size:11px;}
+  .clip-list li .cname{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;gap:6px;align-items:center;}
+  .clip-list li .cdur{font-family:var(--mono);color:var(--muted);flex:none;}
+  .clip-list li.trimmed .cdur{color:var(--accent);}
+  .total-line{margin-top:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+  .total-line strong{color:var(--text);}
+  .warn{margin-top:5px;font-size:11px;color:var(--accent);}
+
+  textarea{width:100%;background:#14151C;border:1px solid var(--panel-border);border-radius:6px;color:var(--text);padding:8px 9px;font-family:var(--sans);font-size:12.5px;line-height:1.4;resize:vertical;min-height:64px;}
+  textarea:focus{border-color:var(--highlight);}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#1A1300;border:none;padding:9px 14px;border-radius:7px;font-size:13px;font-weight:650;cursor:pointer;width:100%;min-height:40px;}
+  .btn:hover:not(:disabled){filter:brightness(1.06);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;filter:none;}
+
+  .progress-track{height:5px;background:#14151C;border-radius:3px;overflow:hidden;margin-top:8px;}
+  .progress-fill{height:100%;width:0%;background:var(--highlight);transition:width 0.12s linear;}
+  .status-line{margin-top:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+  .status-line.ready{color:var(--highlight);}
+  .status-line.error{color:var(--danger);}
+
+  .download-box{margin-top:8px;display:none;border:1px solid var(--highlight);background:rgba(62,232,174,0.12);border-radius:7px;padding:9px;text-align:center;}
+  .download-box .size{display:block;margin-top:2px;font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+  footer.foot{max-width:1180px;margin:0 auto;padding:5px 14px 14px;color:var(--muted);font-size:10px;line-height:1.45;}
+  @media (max-width:860px){ footer.foot{padding-bottom:90px;} }
+
+  /* Mobile par export ek tap door — is button se seedha export card tak scroll ho jaata hai */
+  .sticky-export{display:none;}
+  @media (max-width:860px){
+    .sticky-export{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;
+      padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+      background:linear-gradient(180deg, rgba(16,17,22,0) 0%, var(--bg) 35%);
+      pointer-events:none;
+      opacity:0;transform:translateY(6px);transition:opacity 0.18s, transform 0.18s;
+    }
+    .sticky-export.show{opacity:1;transform:translateY(0);}
+    .sticky-export .btn{pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Relationship Cues — Card Maker</h1>
 
-  <div class="canvas-container" id="canvasContainer">
-    <canvas id="card" width="1080" height="1350"></canvas>
-    <div class="placeholder-btn" id="placeholderHint">Select a video below</div>
-    <div class="divider" id="divider"><div class="bar"></div></div>
+<header class="top">
+  <div class="mark">CAPTION DECK</div>
+  <h1>4:5 Reel Maker — word-highlight captions</h1>
+  <p>Video/image jodo, caption add karo (type ya audio se auto), export karo.</p>
+</header>
+
+<div class="app">
+
+  <div class="stage">
+    <div class="ratio-switch" id="ratioSwitch">
+      <label class="ratio-opt"><input type="radio" name="aspectRatio" value="4:5" checked><span>4:5 Feed</span></label>
+      <label class="ratio-opt"><input type="radio" name="aspectRatio" value="9:16"><span>9:16 Reels/Shorts</span></label>
+    </div>
+    <div class="frame-wrap">
+      <canvas id="stageCanvas" width="720" height="900"></canvas>
+      <div class="frame-empty" id="frameEmpty">
+        <div class="icon">▭</div>
+        <div>Video/Image upload karne ke baad<br>preview yahan dikhega (4:5)</div>
+      </div>
+    </div>
+    <div class="transport">
+      <button id="btnPlay" disabled>▶ Preview</button>
+      <span class="timecode" id="timecode">0:00 / 0:00</span>
+    </div>
   </div>
-  <div class="hint">📌 Drag the cover to reposition · use "Zoom" to crop tighter · use "Cover Frame" to pick a moment from the video · tap a word in the text to highlight it</div>
 
-  <div class="controls">
-    <div class="toggleRow">
-      <span>🔤 Full Text Card (no video)</span>
-      <input type="checkbox" id="fullTextToggle" />
-    </div>
+  <div class="panel">
 
-    <div class="row">
-      <button id="pickVideoBtn">🎥 Select Video</button>
-    </div>
-    <div class="row">
-      <button id="saveBtn" class="primary">🖼️ Save PNG</button>
-      <button id="saveVideoBtn" class="primary" disabled>🎬 Save Video</button>
-    </div>
-    <input type="file" id="videoInput" accept="video/*" />
-    <video id="videoSource" playsinline muted style="display:none;"></video>
-    <canvas id="coverCaptureCanvas" style="display:none;"></canvas>
-
-    <label class="small" id="coverFrameRow" style="display:none;">🎬 Cover Frame <span id="coverTimeVal">0.0</span>s
-      <input type="range" id="coverScrubber" min="0" max="1" step="0.05" value="0" />
-    </label>
-
-    <label class="small">Colour Style</label>
-    <div class="swatchRow" id="swatchRow"></div>
-
-    <div class="row" id="fullTextExtras" style="display:none;">
-      <button id="randomGradientBtn">🎨 Random Gradient</button>
-      <label class="colorPickBtn" for="bgColorPicker">🖌️ Pick Colour
-        <input type="color" id="bgColorPicker" value="#4CAF50" />
+    <div class="card">
+      <div class="card-head"><span class="step">01</span><h2>Video/Image upload</h2></div>
+      <details>
+        <summary>Kaise kaam karta hai</summary>
+        <p>Video aur image dono ek saath select kar sakte ho, jis order mein select karo usi order mein judenge. Har image max ~5-6s dikhegi. Total max 59s.</p>
+      </details>
+      <label class="file-drop" for="mediaInput">
+        <span id="dropLabel">Video/Image choose karein (multiple)</span>
+        <input type="file" id="mediaInput" accept="video/*,image/*" multiple>
       </label>
+      <ul class="clip-list" id="clipList"></ul>
+      <div class="total-line" id="totalLine" style="display:none;"></div>
+      <div class="warn" id="lengthWarn" style="display:none;"></div>
     </div>
 
-    <textarea id="factText" placeholder="Type your text here..."></textarea>
+    <div class="card">
+      <div class="card-head"><span class="step">02</span><h2>Caption — type karein ya audio se auto</h2></div>
+      <details>
+        <summary>Kaise kaam karta hai</summary>
+        <p>Text khud likho, ya English audio (voiceover) attach karo — transcript + har word ka exact timing auto-generate hoga. Audio attach karne par woh export ki soundtrack bhi ban jaati hai.</p>
+      </details>
+      <label class="file-drop" for="audioInput">
+        <span id="audioDropLabel">Audio track (optional, auto-transcribe)</span>
+        <input type="file" id="audioInput" accept="audio/*">
+      </label>
+      <div class="status-line" id="transcribeStatus" style="display:none;"></div>
+      <textarea id="paragraphInput" placeholder="Caption paragraph yahan likho..." style="margin-top:10px;"></textarea>
+    </div>
 
-    <label class="small">Font Size <span id="fontSizeVal">56</span>px
-      <input type="range" id="fontSize" min="28" max="150" value="56" />
-    </label>
+    <div class="card" id="exportCard">
+      <div class="card-head"><span class="step">03</span><h2>Export</h2></div>
+      <button class="btn" id="btnExport" disabled>Video Export Karein</button>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="status-line" id="statusLine">Media aur text dono chahiye export ke liye.</div>
+      <div class="download-box" id="downloadBox">
+        <button class="btn" id="downloadBtn" type="button" style="width:auto;padding:9px 18px;">⬇ Download Video</button>
+        <span class="size" id="downloadSize"></span>
+      </div>
+    </div>
 
-    <label class="small">Cover Zoom / Crop <span id="zoomVal">100</span>%
-      <input type="range" id="zoom" min="100" max="300" value="100" />
-    </label>
-
-    <div class="hint">Saved image goes to your "Downloads" folder</div>
   </div>
 </div>
 
+<div class="sticky-export" id="stickyExport">
+  <button class="btn" id="stickyExportBtn" type="button">↓ Export tak jaayen</button>
+</div>
+
+<footer class="foot">
+  Sab browser mein hi process hota hai, koi upload nahi. Export webm/mp4 mein hota hai. <strong>Auto-transcribe</strong> ek baar Whisper model internet se load karta hai (~40-70MB) — Claude ke artifact preview mein sandbox ki wajah se kaam nahi karega, isliye yeh file khud host/open karke test karein.
+</footer>
+
 <script>
-  const canvas = document.getElementById('card');
-  const ctx = canvas.getContext('2d');
-  const container = document.getElementById('canvasContainer');
-  const divider = document.getElementById('divider');
-  const placeholderHint = document.getElementById('placeholderHint');
-  const factText = document.getElementById('factText');
-  const fontSizeInput = document.getElementById('fontSize');
-  const fontSizeVal = document.getElementById('fontSizeVal');
-  const zoomInput = document.getElementById('zoom');
-  const zoomVal = document.getElementById('zoomVal');
-  const videoInput = document.getElementById('videoInput');
-  const videoSource = document.getElementById('videoSource');
-  const coverCaptureCanvas = document.getElementById('coverCaptureCanvas');
-  const coverCtx = coverCaptureCanvas.getContext('2d');
-  const coverFrameRow = document.getElementById('coverFrameRow');
-  const coverScrubber = document.getElementById('coverScrubber');
-  const coverTimeVal = document.getElementById('coverTimeVal');
-  const fullTextToggle = document.getElementById('fullTextToggle');
-  const pickVideoBtn = document.getElementById('pickVideoBtn');
-  const saveVideoBtn = document.getElementById('saveVideoBtn');
+(function(){
+  let CANVAS_W = 720, CANVAS_H = 900;
+  const WATERMARK_TEXT = 'Relationship Cues';
+  const MAX_TOTAL_SECONDS = 59;
+  const LEFT_PAD = 40;
+  const RIGHT_PAD = 40;
+  const HIGHLIGHT_COLOR = '#3EE8AE';
+  const MAX_WORDS_PER_CHUNK = 9;
+  const IMAGE_MIN_SEC = 5, IMAGE_MAX_SEC = 6;
+  const TRANSITION_SEC = 0.4;
 
-  // When true, drawCard() paints the live video frame instead of the
-  // static captured cover — used only while recording a video export.
-  let liveVideoMode = false;
-  const swatchRow = document.getElementById('swatchRow');
-  const fullTextExtras = document.getElementById('fullTextExtras');
-  const randomGradientBtn = document.getElementById('randomGradientBtn');
-  const bgColorPicker = document.getElementById('bgColorPicker');
-
-  // Canvas is 4:5 (width:height) — TEXT area on TOP, IMAGE area on BOTTOM
-  const SIZE_W = 1080;
-  const SIZE_H = 1350;
-  const FONT_STACK = '"Anton", "Poppins", Arial, sans-serif';
-  const WATERMARK_TEXT = 'RELATIONSHIP CUES';
-
-  // Selectable text/background colour combinations. `highlight` is the colour
-  // a tapped word turns — chosen per combo so it still stands out.
-  const COMBOS = [
-    { bg: '#FFFFFF', text: '#000000', highlight: '#E53935', name: 'White' },
-    { bg: '#000000', text: '#FFFFFF', highlight: '#FFD54F', name: 'Black' },
-    { bg: '#F5D400', text: '#000000', highlight: '#D32F2F', name: 'Yellow' },
-    { bg: '#D32F2F', text: '#FFFFFF', highlight: '#FFEB3B', name: 'Red' },
-    { bg: '#1B5E20', text: '#FFFFFF', highlight: '#FFD54F', name: 'Green' },
-    { bg: '#0D1B4C', text: '#FFFFFF', highlight: '#FFD54F', name: 'Navy' },
-    { bg: '#F8BBD0', text: '#000000', highlight: '#AD1457', name: 'Pink' },
-    { bg: '#4A148C', text: '#FFFFFF', highlight: '#FFEB3B', name: 'Purple' },
-    { bg: '#FB8C00', text: '#000000', highlight: '#FFFFFF', name: 'Orange' },
-    { bg: '#00695C', text: '#FFFFFF', highlight: '#FFD54F', name: 'Teal' },
-    { bg: '#5D1049', text: '#FFFFFF', highlight: '#FFD54F', name: 'Maroon' },
-    { bg: '#C8E6C9', text: '#000000', highlight: '#2E7D32', name: 'Mint' },
-    { bg: '#81D4FA', text: '#000000', highlight: '#0D47A1', name: 'Sky Blue' },
-    { bg: '#2C2C2C', text: '#FFFFFF', highlight: '#FF7043', name: 'Charcoal' },
+  // Ken Burns movement combinations (>= 9 distinct patterns). Pan amplitude here is chosen
+  // to match the crop margin available at the scale used, so the image genuinely travels
+  // edge-to-edge across the clip instead of getting clamped back to center (which made the
+  // old values look almost static). Pure pans use a constant 1.30x scale (margin ±0.115,
+  // we use ±0.095 for a safety buffer); zoom+drift combos keep deviation inside the margin
+  // of their smallest scale throughout the eased timeline.
+  const KEN_BURNS_COMBOS = [
+    { startScale:1.00, endScale:1.35, startCx:0.50, startCy:0.50, endCx:0.50, endCy:0.50 }, // zoom in, center
+    { startScale:1.35, endScale:1.00, startCx:0.50, startCy:0.50, endCx:0.50, endCy:0.50 }, // zoom out, center
+    { startScale:1.30, endScale:1.30, startCx:0.405, startCy:0.50, endCx:0.595, endCy:0.50 }, // pan left->right
+    { startScale:1.30, endScale:1.30, startCx:0.595, startCy:0.50, endCx:0.405, endCy:0.50 }, // pan right->left
+    { startScale:1.30, endScale:1.30, startCx:0.50, startCy:0.405, endCx:0.50, endCy:0.595 }, // pan top->bottom
+    { startScale:1.30, endScale:1.30, startCx:0.50, startCy:0.595, endCx:0.50, endCy:0.405 }, // pan bottom->top
+    { startScale:1.30, endScale:1.30, startCx:0.405, startCy:0.405, endCx:0.595, endCy:0.595 }, // diagonal pan TL->BR
+    { startScale:1.30, endScale:1.30, startCx:0.595, startCy:0.595, endCx:0.405, endCy:0.405 }, // diagonal pan BR->TL
+    { startScale:1.30, endScale:1.30, startCx:0.405, startCy:0.595, endCx:0.595, endCy:0.405 }, // diagonal pan BL->TR
+    { startScale:1.30, endScale:1.30, startCx:0.595, startCy:0.405, endCx:0.405, endCy:0.595 }, // diagonal pan TR->BL
+    { startScale:1.35, endScale:1.15, startCx:0.50, startCy:0.50, endCx:0.45, endCy:0.45 }, // zoom out + drift toward TL
+    { startScale:1.35, endScale:1.15, startCx:0.50, startCy:0.50, endCx:0.55, endCy:0.55 }, // zoom out + drift toward BR
+    { startScale:1.35, endScale:1.15, startCx:0.50, startCy:0.50, endCx:0.55, endCy:0.45 }, // zoom out + drift toward TR
+    { startScale:1.35, endScale:1.15, startCx:0.50, startCy:0.50, endCx:0.45, endCy:0.55 }  // zoom out + drift toward BL
   ];
+  let lastComboIdx = -1;
+  function pickCombo(){
+    let idx;
+    do{ idx = Math.floor(Math.random()*KEN_BURNS_COMBOS.length); }
+    while(idx === lastComboIdx && KEN_BURNS_COMBOS.length > 1);
+    lastComboIdx = idx;
+    return idx;
+  }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  // ease-in-out so the pan/zoom accelerates then settles, like a handled camera move
+  function easeInOutCubic(t){ return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
-  let state = {
-    image: null,
-    fullText: false, // when true, no image is needed and text fills the whole card
-    comboIndex: 0,    // which COMBOS entry is active
-    customBg: null,   // { bgColors: [hex] or [hex,hex], text, highlight } — Full Text mode only
-    textRatio: 0.32,   // fraction of height given to the TEXT area (top)
-    fontSize: 56,
-    text: factText.value,
-    zoom: 1,          // 1 = fully fit, higher = zoomed in / more cropped
-    centerX: null,    // center point of the crop window, in source-image pixels
-    centerY: null,
-    cropW: null,
-    cropH: null,
-    redWords: new Set(), // indices (into the current word list) of words tapped to highlight
-    wordBoxes: []         // hit-test boxes for each drawn word, rebuilt every drawCard()
-  };
+  const canvas = document.getElementById('stageCanvas');
+  const ctx = canvas.getContext('2d');
+  const frameEmpty = document.getElementById('frameEmpty');
+  const mediaInput = document.getElementById('mediaInput');
+  const dropLabel = document.getElementById('dropLabel');
+  const clipListEl = document.getElementById('clipList');
+  const totalLine = document.getElementById('totalLine');
+  const lengthWarn = document.getElementById('lengthWarn');
+  const paragraphInput = document.getElementById('paragraphInput');
+  const audioInput = document.getElementById('audioInput');
+  const audioDropLabel = document.getElementById('audioDropLabel');
+  const transcribeStatus = document.getElementById('transcribeStatus');
+  const btnPlay = document.getElementById('btnPlay');
+  const btnExport = document.getElementById('btnExport');
+  const timecodeEl = document.getElementById('timecode');
+  const progressFill = document.getElementById('progressFill');
+  const statusLine = document.getElementById('statusLine');
+  const downloadBox = document.getElementById('downloadBox');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadSize = document.getElementById('downloadSize');
+  let lastBlob = null, lastFilename = 'caption-video.webm';
 
-  // Returns { bgColors: [hex] or [hex,hex], text, highlight }. In Full Text
-  // mode a custom (gradient or manually picked) background takes priority.
-  function currentCombo() {
-    if (state.fullText && state.customBg) return state.customBg;
-    const preset = COMBOS[state.comboIndex];
-    return { bgColors: [preset.bg], text: preset.text, highlight: preset.highlight };
+  async function triggerDownload(){
+    if(!lastBlob) return;
+    downloadBtn.disabled = true;
+    const originalLabel = downloadBtn.textContent;
+    downloadBtn.textContent = 'Saving...';
+    try{
+      const downloads = (window.claude && typeof window.claude.use === 'function')
+        ? await window.claude.use('downloads') : null;
+      if(downloads){
+        try{
+          const res = await downloads.save({ filename: lastFilename, data: lastBlob });
+          downloadBtn.textContent = res && res.status === 'delivered' ? 'Sent ✓' : 'Saved ✓';
+          setTimeout(function(){ downloadBtn.textContent = originalLabel; downloadBtn.disabled = false; }, 1600);
+          return;
+        }catch(err){
+          const code = err && err.code;
+          if(code === 'declined'){
+            downloadBtn.textContent = originalLabel; downloadBtn.disabled = false; return;
+          }
+          // fall through to manual method for other errors (unavailable, rate_limited, etc.)
+        }
+      }
+      // Fallback: plain browser download (works when this page is opened directly, not inside the artifact viewer)
+      const url = URL.createObjectURL(lastBlob);
+      const a = document.createElement('a');
+      a.href = url; a.download = lastFilename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      downloadBtn.textContent = originalLabel;
+      downloadBtn.disabled = false;
+    }catch(e){
+      downloadBtn.textContent = originalLabel;
+      downloadBtn.disabled = false;
+    }
+  }
+  downloadBtn.addEventListener('click', triggerDownload);
+
+  const video = document.createElement('video');
+  video.playsInline = true;
+  video.preload = 'auto';
+
+  const narrationAudio = document.createElement('audio');
+  narrationAudio.preload = 'auto';
+  let narrationDuration = 0;
+  let wordTimestamps = null;   // [{text, start, end}] from auto-transcription, null = manual/uniform timing
+  let transcribing = false;
+  let effectiveMaxSeconds = MAX_TOTAL_SECONDS;
+  let rawClipsCache = null;
+  let whisperPipelinePromise = null;
+
+  let clips = [];          // {type:'video'|'image', file, url, name, rawDuration, usedDuration, trimmed, img, comboIdx}
+  let effectiveDuration = 0;
+  let currentClipIdx = 0;
+  let globalElapsedBase = 0;
+  let hasClips = false;
+  let layoutCache = null;
+  let rafId = null;
+
+  let audioCtx = null, audioDestination = null, audioGraphReady = false;
+  let isRecording = false;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let chosenMime = '';
+  let previewing = false;
+
+  let imageClipStartAt = 0; // performance.now() when current image clip became active
+  let transitionSnapshot = null; // offscreen canvas
+  let transitioning = false;
+  let transitionStart = 0;
+
+  const snapCanvas = document.createElement('canvas');
+  snapCanvas.width = CANVAS_W; snapCanvas.height = CANVAS_H;
+  const snapCtx = snapCanvas.getContext('2d');
+
+  function fmtTime(s){
+    s = Math.max(0, s || 0);
+    const m = Math.floor(s/60);
+    const sec = Math.floor(s%60);
+    return m + ':' + String(sec).padStart(2,'0');
   }
 
-  function luminance(hex) {
-    const c = hex.replace('#', '');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  }
-  function isLightColor(hex) { return luminance(hex) > 0.6; }
-  function avgIsLight(colors) {
-    return (colors.reduce((s, c) => s + luminance(c), 0) / colors.length) > 0.6;
-  }
-
-  function hexToRgba(hex, alpha) {
-    const c = hex.replace('#', '');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
+  function getLocalElapsed(){
+    const c = clips[currentClipIdx];
+    if(!c) return 0;
+    if(c.type === 'video'){
+      if(video.ended && c.videoEndedAt){
+        return Math.min(c.usedDuration, video.duration + (performance.now() - c.videoEndedAt)/1000);
+      }
+      return Math.min(video.currentTime, c.usedDuration);
+    }
+    return Math.min((performance.now() - imageClipStartAt)/1000, c.usedDuration);
   }
 
-  // Builds a solid or (2-colour) gradient fillStyle from a bgColors array.
-  function bgFillStyle(colors, alpha) {
-    if (alpha === undefined) alpha = 1;
-    if (colors.length === 1) return hexToRgba(colors[0], alpha);
-    const grad = ctx.createLinearGradient(0, 0, SIZE_W, SIZE_H);
-    grad.addColorStop(0, hexToRgba(colors[0], alpha));
-    grad.addColorStop(1, hexToRgba(colors[1], alpha));
-    return grad;
+  function totalElapsed(){
+    if(!clips.length) return 0;
+    return globalElapsedBase + getLocalElapsed();
   }
 
-  // Auto-picks readable text/highlight colours for a custom background.
-  function contrastFor(colors) {
-    const dark = !avgIsLight(colors);
-    return { text: dark ? '#FFFFFF' : '#000000', highlight: dark ? '#FFD54F' : '#D32F2F' };
-  }
+  // ---------- Multi-file upload (video + image) ----------
+  mediaInput.addEventListener('change', function(e){
+    const files = Array.from(e.target.files || []);
+    if(!files.length) return;
 
-  function hslToHex(h, s, l) {
-    s /= 100; l /= 100;
-    const k = n => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    const toHex = x => Math.round(255 * x).toString(16).padStart(2, '0');
-    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
-  }
+    dropLabel.textContent = files.length + ' file(s) selected — loading...';
+    btnPlay.disabled = true;
+    btnExport.disabled = true;
+    clipListEl.innerHTML = '';
+    totalLine.style.display = 'none';
+    lengthWarn.style.display = 'none';
 
-  // A fresh, reasonably pleasant random 2-colour gradient each time it's called.
-  function randomGradientColors() {
-    const h1 = Math.floor(Math.random() * 360);
-    const h2 = (h1 + 40 + Math.floor(Math.random() * 120)) % 360;
-    const s = 65 + Math.floor(Math.random() * 20);
-    const l = 42 + Math.floor(Math.random() * 16);
-    return [hslToHex(h1, s, l), hslToHex(h2, s, l)];
-  }
+    const rawClips = files.map(f => ({
+      file: f, url: URL.createObjectURL(f), name: f.name,
+      type: f.type.indexOf('image/') === 0 ? 'image' : 'video',
+      rawDuration: 0, img: null
+    }));
 
-  function buildSwatches() {
-    swatchRow.innerHTML = '';
-    COMBOS.forEach((combo, i) => {
-      const btn = document.createElement('button');
-      const usingCustom = state.fullText && state.customBg;
-      btn.className = 'swatch' + (!usingCustom && i === state.comboIndex ? ' selected' : '');
-      btn.style.background = combo.bg;
-      btn.title = combo.name;
-      btn.addEventListener('click', () => {
-        state.comboIndex = i;
-        state.customBg = null; // preset overrides any gradient/manual colour
-        buildSwatches();
-        drawCard();
-      });
-      swatchRow.appendChild(btn);
-    });
-  }
-  buildSwatches();
+    let loaded = 0;
+    function onOneLoaded(){
+      loaded++;
+      if(loaded === rawClips.length){ rawClipsCache = rawClips; finalizeClips(rawClips); }
+    }
 
-  function layoutLines(context, wordObjs, maxWidth) {
-    const spaceWidth = context.measureText(' ').width;
-    const lines = [];
-    let currentLine = [];
-    let currentWidth = 0;
-    wordObjs.forEach(({ word, idx }) => {
-      const w = context.measureText(word).width;
-      const addWidth = currentLine.length ? spaceWidth + w : w;
-      if (currentWidth + addWidth > maxWidth && currentLine.length) {
-        lines.push(currentLine);
-        currentLine = [{ word, idx, width: w }];
-        currentWidth = w;
+    rawClips.forEach(c => {
+      if(c.type === 'image'){
+        const img = new Image();
+        img.onload = function(){
+          c.img = img;
+          c.rawDuration = IMAGE_MIN_SEC + Math.random()*(IMAGE_MAX_SEC - IMAGE_MIN_SEC);
+          onOneLoaded();
+        };
+        img.onerror = function(){ c.rawDuration = 0; onOneLoaded(); };
+        img.src = c.url;
       } else {
-        currentLine.push({ word, idx, width: w });
-        currentWidth += addWidth;
+        const probe = document.createElement('video');
+        probe.preload = 'metadata';
+        probe.src = c.url;
+        probe.onloadedmetadata = function(){ c.rawDuration = probe.duration; onOneLoaded(); };
+        probe.onerror = function(){ c.rawDuration = 0; onOneLoaded(); };
       }
     });
-    if (currentLine.length) lines.push(currentLine);
+  });
+
+  function finalizeClips(rawClips){
+    let cum = 0;
+    const finalClips = [];
+    lastComboIdx = -1;
+    rawClips.forEach(c => {
+      const remaining = effectiveMaxSeconds - cum;
+      if(remaining <= 0.02) return;
+      const used = Math.min(c.rawDuration, remaining);
+      const clip = {
+        type: c.type, file: c.file, url: c.url, name: c.name,
+        rawDuration: c.rawDuration, usedDuration: used,
+        trimmed: used < c.rawDuration - 0.02,
+        img: c.img, comboIdx: c.type === 'image' ? pickCombo() : -1
+      };
+      finalClips.push(clip);
+      cum += used;
+    });
+
+    // If a narration track is longer than the combined visual clips, hold the last clip
+    // (freeze its final Ken Burns position for video / keep panning for image) so the
+    // visuals cover the whole narration instead of ending early.
+    if(finalClips.length && cum < effectiveMaxSeconds - 0.05){
+      const gap = effectiveMaxSeconds - cum;
+      finalClips[finalClips.length - 1].usedDuration += gap;
+      cum = effectiveMaxSeconds;
+    }
+
+    clips = finalClips;
+    effectiveDuration = cum;
+    currentClipIdx = 0;
+    globalElapsedBase = 0;
+    hasClips = clips.length > 0;
+
+    dropLabel.textContent = clips.length + ' clip(s) attached';
+    renderClipList(rawClips.length);
+
+    if(hasClips){
+      frameEmpty.style.display = 'none';
+      btnPlay.disabled = false;
+      activateClip(0, function(){ drawStaticFrame(); });
+    }
+    updateExportReady();
+  }
+
+  function renderClipList(rawCount){
+    clipListEl.innerHTML = '';
+    clips.forEach(c => {
+      const li = document.createElement('li');
+      if(c.trimmed) li.className = 'trimmed';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'cname';
+      nameSpan.textContent = (c.type === 'image' ? '🖼 ' : '🎬 ') + c.name;
+      const durSpan = document.createElement('span');
+      durSpan.className = 'cdur';
+      durSpan.textContent = c.trimmed ? (fmtTime(c.usedDuration) + ' (trimmed)') : fmtTime(c.usedDuration);
+      li.appendChild(nameSpan);
+      li.appendChild(durSpan);
+      clipListEl.appendChild(li);
+    });
+    totalLine.style.display = 'block';
+    totalLine.innerHTML = 'Total used: <strong>' + fmtTime(effectiveDuration) + '</strong> / ' + Math.round(effectiveMaxSeconds) + 's max' + (wordTimestamps ? ' (audio track length se set)' : '');
+    if(rawCount > clips.length || clips.some(c => c.trimmed)){
+      lengthWarn.style.display = 'block';
+      lengthWarn.textContent = 'Combined length ' + Math.round(effectiveMaxSeconds) + ' second se zyaada thi — extra hissa/clips trim/skip kar diye gaye.';
+    } else {
+      lengthWarn.style.display = 'none';
+    }
+  }
+
+  // ---------- Activation (video plays; image just starts a timer) ----------
+  function activateClip(idx, onReady){
+    const c = clips[idx];
+    if(c.type === 'video'){
+      video.pause();
+      c.videoEndedAt = null;
+      const endedHandler = function(){ c.videoEndedAt = performance.now(); };
+      video.addEventListener('ended', endedHandler, { once: true });
+      const handler = function(){
+        video.removeEventListener('loadeddata', handler);
+        video.currentTime = 0;
+        const p = video.play();
+        if(p && p.then) p.then(onReady).catch(onReady); else onReady();
+      };
+      video.addEventListener('loadeddata', handler);
+      video.src = c.url;
+      video.load();
+    } else {
+      video.pause();
+      imageClipStartAt = performance.now();
+      if(onReady) onReady();
+    }
+  }
+
+  function captureSnapshot(){
+    snapCtx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    snapCtx.drawImage(canvas, 0, 0);
+    transitionSnapshot = snapCanvas;
+  }
+
+  function advance(onAdvanced, onFinished){
+    if(currentClipIdx < clips.length - 1){
+      captureSnapshot();
+      globalElapsedBase += clips[currentClipIdx].usedDuration;
+      currentClipIdx++;
+      activateClip(currentClipIdx, function(){
+        transitioning = true;
+        transitionStart = performance.now();
+        onAdvanced();
+      });
+    } else {
+      onFinished();
+    }
+  }
+
+  // ---------- Caption text ----------
+  paragraphInput.addEventListener('input', function(){
+    layoutCache = null;
+    // manual edits can desync from the auto-detected word timings, so fall back to
+    // uniform timing the moment the user types — activeWordFor() already guards on
+    // word-count match, but clearing here keeps the "auto" badge accurate.
+    if(wordTimestamps && wordTimestamps.length !== getWords().length) wordTimestamps = null;
+    updateExportReady();
+    drawStaticFrame();
+  });
+
+  function getWords(){
+    return paragraphInput.value.trim().split(/\s+/).filter(Boolean);
+  }
+
+  // ---------- Auto-transcribe an attached narration audio track (client-side Whisper) ----------
+  function getWhisperPipeline(){
+    if(!whisperPipelinePromise){
+      whisperPipelinePromise = import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2')
+        .then(function(mod){ return mod.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en'); });
+    }
+    return whisperPipelinePromise;
+  }
+
+  async function decodeAudioFileToMono16k(file){
+    const arrayBuffer = await file.arrayBuffer();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const probeCtx = new AudioCtx();
+    const audioBuffer = await probeCtx.decodeAudioData(arrayBuffer);
+    const duration = audioBuffer.duration;
+    const offlineCtx = new OfflineAudioContext(1, Math.ceil(duration * 16000), 16000);
+    const src = offlineCtx.createBufferSource();
+    src.buffer = audioBuffer;
+    src.connect(offlineCtx.destination);
+    src.start(0);
+    const rendered = await offlineCtx.startRendering();
+    probeCtx.close();
+    return { data: rendered.getChannelData(0), duration: duration };
+  }
+
+  async function transcribeAudioFile(file){
+    transcribing = true;
+    updateExportReady();
+    audioDropLabel.textContent = file.name + ' — processing...';
+    transcribeStatus.style.display = 'block';
+    transcribeStatus.className = 'status-line';
+    transcribeStatus.textContent = 'Audio decode ho raha hai...';
+    try{
+      const decoded = await decodeAudioFileToMono16k(file);
+      narrationDuration = decoded.duration;
+      transcribeStatus.textContent = 'Speech model load ho raha hai (pehli baar ~40-70MB, thoda time lagega)...';
+      const transcriber = await getWhisperPipeline();
+      transcribeStatus.textContent = 'Transcribe ho raha hai...';
+      const output = await transcriber(decoded.data, { return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
+      const chunks = output.chunks || [];
+      wordTimestamps = chunks
+        .filter(function(c){ return c.text && c.text.trim(); })
+        .map(function(c){ return { text: c.text.trim(), start: c.timestamp[0], end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) }; });
+
+      paragraphInput.value = (output.text || '').trim();
+      layoutCache = null;
+
+      effectiveMaxSeconds = Math.min(MAX_TOTAL_SECONDS, narrationDuration);
+      narrationAudio.src = URL.createObjectURL(file);
+      audioGraphReady = false; // rebuild the export audio graph against the narration track
+
+      if(rawClipsCache) finalizeClips(rawClipsCache);
+
+      audioDropLabel.textContent = file.name + ' attached';
+      transcribeStatus.className = 'status-line ready';
+      transcribeStatus.textContent = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ') — neeche text edit bhi kar sakte ho.';
+    }catch(err){
+      console.error('Transcription failed:', err);
+      wordTimestamps = null;
+      audioDropLabel.textContent = 'English audio track choose karein (optional, auto-transcribe)';
+      transcribeStatus.className = 'status-line error';
+      transcribeStatus.textContent = 'Auto-transcribe fail ho gaya (internet ya browser support issue). Neeche paragraph khud type kar sakte ho.';
+    }finally{
+      transcribing = false;
+      updateExportReady();
+      drawStaticFrame();
+    }
+  }
+
+  audioInput.addEventListener('change', function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    transcribeAudioFile(file);
+  });
+
+  function updateExportReady(){
+    const words = getWords();
+    const textReady = words.length > 0;
+    btnExport.disabled = !(hasClips && textReady) || transcribing;
+    if(transcribing){
+      statusLine.textContent = 'Audio transcribe ho raha hai, thoda ruko...';
+    } else if(!hasClips && !textReady){
+      statusLine.textContent = 'Media aur text dono chahiye export ke liye.';
+    } else if(!hasClips){
+      statusLine.textContent = 'Ab video/image upload karein.';
+    } else if(!textReady){
+      statusLine.textContent = 'Ab caption paragraph dalein.';
+    } else {
+      statusLine.textContent = 'Export ke liye taiyaar.';
+    }
+    statusLine.className = 'status-line' + (btnExport.disabled ? '' : ' ready');
+  }
+
+  // ---------- Word-level layout, chunked into max 9-word captions ----------
+  function buildWordLayout(context, chunkWords, maxWidth){
+    const spaceWidth = context.measureText(' ').width;
+    const lines = [];
+    let currentWords = [];
+    let currentX = 0;
+    chunkWords.forEach(w => {
+      const width = context.measureText(w.text).width;
+      const adv = currentWords.length === 0 ? width : (currentX + spaceWidth + width);
+      if(adv > maxWidth && currentWords.length > 0){
+        lines.push(currentWords);
+        currentWords = [];
+        currentX = 0;
+      }
+      const x = currentWords.length === 0 ? 0 : (currentX + spaceWidth);
+      currentWords.push({ index: w.index, text: w.text, x: x, width: width });
+      currentX = x + width;
+    });
+    if(currentWords.length) lines.push(currentWords);
     return lines;
   }
 
-  // Returns { src, width, height } for whatever should currently be drawn —
-  // the live <video> element while recording (liveVideoMode), otherwise the
-  // static captured cover canvas. Keeping both paths returning the same
-  // shape means the crop/zoom math below never needs to know which one it got.
-  function activeMediaSource() {
-    if (liveVideoMode && videoSource.videoWidth && videoSource.videoHeight) {
-      return { src: videoSource, width: videoSource.videoWidth, height: videoSource.videoHeight };
+  function chunkWordsFn(words){
+    const chunks = [];
+    for(let i=0; i<words.length; i+=MAX_WORDS_PER_CHUNK){
+      chunks.push(words.slice(i, i+MAX_WORDS_PER_CHUNK).map((w, localIdx) => ({ text: w, index: i+localIdx })));
     }
-    if (state.image) {
-      return { src: state.image, width: state.image.width, height: state.image.height };
-    }
-    return null;
+    return chunks;
   }
 
-  // Draws `media` ({src,width,height}) blurred, covering the whole card (used
-  // as a Full Text mode background). Drawn slightly oversized so blur edge
-  // softening stays off-canvas.
-  function drawFullTextBackgroundImage(media, blurPx) {
-    const margin = 40;
-    const targetW = SIZE_W + margin * 2;
-    const targetH = SIZE_H + margin * 2;
-    const targetRatio = targetW / targetH;
-    const imgRatio = media.width / media.height;
-    let baseW, baseH;
-    if (imgRatio > targetRatio) { baseH = media.height; baseW = baseH * targetRatio; }
-    else { baseW = media.width; baseH = baseW / targetRatio; }
-    const cropX = (media.width - baseW) / 2;
-    const cropY = (media.height - baseH) / 2;
-    ctx.save();
-    ctx.filter = `blur(${blurPx}px)`;
-    ctx.drawImage(media.src, cropX, cropY, baseW, baseH, -margin, -margin, targetW, targetH);
-    ctx.restore();
+  function computeLayout(){
+    const words = getWords();
+    const boxTop = CANVAS_H - CANVAS_H/3;
+    const boxHeight = CANVAS_H/3;
+    const maxWidth = CANVAS_W - LEFT_PAD - RIGHT_PAD;
+    const rawChunks = chunkWordsFn(words);
+    let fontSize = 80;
+    let chunkLines, lineHeight, maxLines;
+
+    while(fontSize >= 32){
+      ctx.font = '700 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      lineHeight = fontSize * 1.35;
+      chunkLines = rawChunks.map(c => buildWordLayout(ctx, c, maxWidth));
+      maxLines = chunkLines.reduce((m, lines) => Math.max(m, lines.length), 0);
+      if(maxLines * lineHeight <= boxHeight - 44) break;
+      fontSize -= 4;
+    }
+    return { fontSize, lineHeight, boxTop, boxHeight, chunks: chunkLines, wordCount: words.length };
   }
 
-  function drawCard() {
-    ctx.clearRect(0, 0, SIZE_W, SIZE_H);
-    const combo = currentCombo();
-    const splitY = state.fullText ? SIZE_H : Math.round(SIZE_H * state.textRatio);
-    const media = activeMediaSource();
+  function getLayout(){
+    if(!layoutCache) layoutCache = computeLayout();
+    return layoutCache;
+  }
 
-    // ---- BACKGROUND — full canvas in Full Text mode, top area otherwise ----
-    if (state.fullText && media) {
-      // Blurred photo behind the text, tinted with the chosen colour so text stays readable
-      drawFullTextBackgroundImage(media, 22);
-      ctx.fillStyle = bgFillStyle(combo.bgColors, 0.55);
-      ctx.fillRect(0, 0, SIZE_W, SIZE_H);
-    } else {
-      ctx.fillStyle = bgFillStyle(combo.bgColors);
-      ctx.fillRect(0, 0, SIZE_W, splitY);
-    }
+  // ---------- Drawing ----------
+  function drawCaptionBox(activeWordIndex){
+    const { fontSize, lineHeight, boxTop, boxHeight, chunks, wordCount } = getLayout();
+    if(!wordCount) return;
+    const chunkIndex = Math.min(chunks.length - 1, Math.floor(activeWordIndex / MAX_WORDS_PER_CHUNK));
+    const lines = chunks[chunkIndex];
+    if(!lines || !lines.length) return;
 
-    const paddingX = 60;
-    const maxWidth = SIZE_W - paddingX * 2;
-    ctx.font = `400 ${state.fontSize}px ${FONT_STACK}`;
-    ctx.textBaseline = 'middle';
+    const grad = ctx.createLinearGradient(0, boxTop, 0, CANVAS_H);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.18, 'rgba(0,0,0,0.85)');
+    grad.addColorStop(0.4, 'rgba(0,0,0,0.98)');
+    grad.addColorStop(1, 'rgba(0,0,0,1)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, boxTop, CANVAS_W, boxHeight);
 
-    const paragraphs = (state.text || '').split(/\n/);
-    let globalIdx = 0;
-    const lines = [];
-    paragraphs.forEach(para => {
-      const paraWords = para.toUpperCase().split(/\s+/).filter(Boolean);
-      if (paraWords.length === 0) {
-        lines.push([]); // preserve an intentional blank line
-        return;
-      }
-      const wordObjs = paraWords.map(word => ({ word, idx: globalIdx++ }));
-      layoutLines(ctx, wordObjs, maxWidth).forEach(l => lines.push(l));
-    });
-    const spaceWidth = ctx.measureText(' ').width;
-    const lineHeight = state.fontSize * 1.18;
-    const totalTextHeight = lines.length * lineHeight;
-    const textAreaCenterY = splitY / 2;
-    let startY = textAreaCenterY - totalTextHeight / 2 + lineHeight / 2;
+    const totalHeight = lines.length * lineHeight;
+    let y = boxTop + (boxHeight - totalHeight)/2 + lineHeight*0.78;
 
-    state.wordBoxes = [];
+    ctx.font = '700 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'left';
-    lines.forEach((lineWords, i) => {
-      const lineWidth = lineWords.reduce((sum, w) => sum + w.width, 0) + spaceWidth * (lineWords.length - 1);
-      let x = SIZE_W / 2 - lineWidth / 2;
-      const y = startY + i * lineHeight;
-      lineWords.forEach(w => {
-        ctx.fillStyle = state.redWords.has(w.idx) ? combo.highlight : combo.text;
-        ctx.fillText(w.word, x, y);
-        state.wordBoxes.push({
-          idx: w.idx,
-          x0: x,
-          y0: y - state.fontSize / 2,
-          x1: x + w.width,
-          y1: y + state.fontSize / 2
-        });
-        x += w.width + spaceWidth;
-      });
-    });
-
-    // ---- IMAGE AREA (bottom) — skipped entirely in Full Text mode ----
-    if (!state.fullText) {
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(0, splitY, SIZE_W, SIZE_H - splitY);
-
-    if (media) {
-      const targetW = SIZE_W, targetH = SIZE_H - splitY;
-      const targetRatio = targetW / targetH;
-      const imgRatio = media.width / media.height;
-
-      let baseW, baseH;
-      if (imgRatio > targetRatio) { baseH = media.height; baseW = baseH * targetRatio; }
-      else { baseW = media.width; baseH = baseW / targetRatio; }
-
-      const cropW = baseW / state.zoom;
-      const cropH = baseH / state.zoom;
-
-      state.centerX = Math.max(cropW / 2, Math.min(state.centerX, media.width - cropW / 2));
-      state.centerY = Math.max(cropH / 2, Math.min(state.centerY, media.height - cropH / 2));
-
-      const cropX = state.centerX - cropW / 2;
-      const cropY = state.centerY - cropH / 2;
-
-      state.cropW = cropW;
-      state.cropH = cropH;
-
-      ctx.drawImage(media.src, cropX, cropY, cropW, cropH, 0, splitY, targetW, targetH);
-    }
-    } // end image-area (!state.fullText)
-
-    // ---- WATERMARK — colour adapts so it stays readable on any background ----
-    // On a photo (normal mode) we always assume it's dark-ish and use light text
-    // with a dark scrim. In Full Text mode the "background" is the chosen combo
-    // colour, so we pick light/dark watermark styling based on its brightness.
-    const wmOnLightBg = state.fullText && avgIsLight(combo.bgColors);
-    ctx.save();
-
-    if (!state.fullText) {
-      const scrimH = 130;
-      const scrimGrad = ctx.createLinearGradient(0, SIZE_H - scrimH, 0, SIZE_H);
-      scrimGrad.addColorStop(0, 'rgba(0,0,0,0)');
-      scrimGrad.addColorStop(1, 'rgba(0,0,0,0.38)');
-      ctx.fillStyle = scrimGrad;
-      ctx.fillRect(0, SIZE_H - scrimH, SIZE_W, scrimH);
-    }
-
-    const wmLineColor = wmOnLightBg ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.55)';
-    const wmTextColor = wmOnLightBg ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.92)';
-
-    // thin center rule above the wordmark
-    ctx.strokeStyle = wmLineColor;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(SIZE_W / 2 - 22, SIZE_H - 46);
-    ctx.lineTo(SIZE_W / 2 + 22, SIZE_H - 46);
-    ctx.stroke();
-
-    ctx.font = `600 20px "Poppins", Arial, sans-serif`;
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = wmTextColor;
-    ctx.letterSpacing = '5px';
-    ctx.fillText(WATERMARK_TEXT, SIZE_W / 2 + 2, SIZE_H - 26);
+
+    lines.forEach(lineWords => {
+      lineWords.forEach(w => {
+        const px = LEFT_PAD + w.x;
+        if(w.index === activeWordIndex){
+          const padX = 6, padTop = fontSize*0.78, padBottom = fontSize*0.22;
+          ctx.fillStyle = HIGHLIGHT_COLOR;
+          ctx.fillRect(px - padX, y - padTop, w.width + padX*2, padTop + padBottom);
+          ctx.fillStyle = '#0A0A0A';
+        } else {
+          ctx.fillStyle = '#FFFFFF';
+        }
+        ctx.fillText(w.text, px, y);
+      });
+      y += lineHeight;
+    });
+  }
+
+  function activeWordFor(t, duration, wordCount){
+    if(duration <= 0 || wordCount <= 0) return 0;
+    const perWord = duration / wordCount;
+    return Math.min(wordCount - 1, Math.floor(t / perWord));
+  }
+
+  function currentWordIndex(){
+    const words = getWords();
+    if(!words.length) return 0;
+    if(wordTimestamps && wordTimestamps.length === words.length){
+      const t = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
+      let idx = 0;
+      for(let i = 0; i < wordTimestamps.length; i++){
+        if(wordTimestamps[i].start <= t) idx = i; else break;
+      }
+      return idx;
+    }
+    return activeWordFor(totalElapsed(), effectiveDuration, words.length);
+  }
+
+  function drawVideoFrame(){
+    if(!video.videoWidth) return;
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const targetAspect = CANVAS_W/CANVAS_H;
+    const srcAspect = vw/vh;
+    let sx, sy, sw, sh;
+    if(srcAspect > targetAspect){ sh = vh; sw = vh*targetAspect; sx = (vw-sw)/2; sy = 0; }
+    else { sw = vw; sh = vw/targetAspect; sx = 0; sy = (vh-sh)/2; }
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, CANVAS_W, CANVAS_H);
+  }
+
+  function drawImageFrame(clip){
+    const img = clip.img;
+    if(!img) return;
+    const combo = KEN_BURNS_COMBOS[clip.comboIdx] || KEN_BURNS_COMBOS[0];
+    const rawProgress = clip.usedDuration > 0 ? Math.min(1, getLocalElapsed()/clip.usedDuration) : 0;
+    const progress = easeInOutCubic(rawProgress);
+
+    const targetAspect = CANVAS_W/CANVAS_H;
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    let baseW, baseH;
+    if(iw/ih > targetAspect){ baseH = ih; baseW = ih*targetAspect; }
+    else { baseW = iw; baseH = iw/targetAspect; }
+
+    const scale = lerp(combo.startScale, combo.endScale, progress);
+    const cropW = Math.min(iw, baseW/scale);
+    const cropH = Math.min(ih, baseH/scale);
+    const cx = lerp(combo.startCx, combo.endCx, progress);
+    const cy = lerp(combo.startCy, combo.endCy, progress);
+    let sx = cx*iw - cropW/2;
+    let sy = cy*ih - cropH/2;
+    sx = Math.max(0, Math.min(iw-cropW, sx));
+    sy = Math.max(0, Math.min(ih-cropH, sy));
+
+    ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, CANVAS_W, CANVAS_H);
+  }
+
+  function drawWatermark(){
+    const fontSize = Math.max(15, Math.round(CANVAS_W * 0.032));
+    const padOuter = Math.round(CANVAS_W * 0.035);
+    const boxPadX = Math.round(fontSize * 0.55);
+    const boxPadY = Math.round(fontSize * 0.38);
+
+    ctx.save();
+    ctx.font = '700 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+
+    const textWidth = ctx.measureText(WATERMARK_TEXT).width;
+    const boxW = textWidth + boxPadX * 2;
+    const boxH = fontSize + boxPadY * 2;
+    const boxX = CANVAS_W - padOuter - boxW;
+    const boxY = padOuter;
+    const r = 6;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.beginPath();
+    ctx.moveTo(boxX + r, boxY);
+    ctx.arcTo(boxX + boxW, boxY, boxX + boxW, boxY + boxH, r);
+    ctx.arcTo(boxX + boxW, boxY + boxH, boxX, boxY + boxH, r);
+    ctx.arcTo(boxX, boxY + boxH, boxX, boxY, r);
+    ctx.arcTo(boxX, boxY, boxX + boxW, boxY, r);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(WATERMARK_TEXT, boxX + boxW - boxPadX, boxY + boxPadY);
     ctx.restore();
-
-    const displayRatio = container.clientHeight / SIZE_H;
-    divider.style.display = state.fullText ? 'none' : 'flex';
-    divider.style.top = (splitY * displayRatio) + 'px';
-    placeholderHint.style.top = (splitY * displayRatio) + 'px';
-    placeholderHint.style.height = ((SIZE_H - splitY) * displayRatio) + 'px';
-    placeholderHint.style.display = (state.image || state.fullText) ? 'none' : 'flex';
   }
 
-  let dragging = false;
-  function ratioFromClientY(clientY) {
-    const rect = container.getBoundingClientRect();
-    let ratio = (clientY - rect.top) / rect.height;
-    return Math.max(0.15, Math.min(0.6, ratio));
-  }
-  divider.addEventListener('pointerdown', (e) => {
-    dragging = true;
-    divider.setPointerCapture(e.pointerId);
-  });
-  divider.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    state.textRatio = ratioFromClientY(e.clientY);
-    drawCard();
-  });
-  divider.addEventListener('pointerup', () => { dragging = false; });
-  divider.addEventListener('pointercancel', () => { dragging = false; });
+  function drawStaticFrame(){
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
 
-  // ---- Move/reposition the image by dragging it (image area is now the BOTTOM part) ----
-  let imgDragging = false;
-  let lastX = 0, lastY = 0;
-
-  canvas.addEventListener('pointerdown', (e) => {
-    if (!state.image || state.fullText) return;
-    const rect = container.getBoundingClientRect();
-    const splitYDisplay = rect.top + rect.height * state.textRatio;
-    if (e.clientY < splitYDisplay) return; // only drag within the image area (bottom), not the text area
-    imgDragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
-  });
-
-  canvas.addEventListener('pointermove', (e) => {
-    if (!imgDragging || !state.image) return;
-    const rect = container.getBoundingClientRect();
-    const dxDisplay = e.clientX - lastX;
-    const dyDisplay = e.clientY - lastY;
-    lastX = e.clientX;
-    lastY = e.clientY;
-
-    const displayImageHeight = rect.height * (1 - state.textRatio);
-    const scaleFactorX = state.cropW / rect.width;
-    const scaleFactorY = state.cropH / displayImageHeight;
-
-    state.centerX -= dxDisplay * scaleFactorX;
-    state.centerY -= dyDisplay * scaleFactorY;
-
-    drawCard();
-  });
-
-  // ---- Tap a word in the TEXT area to toggle its highlight colour ----
-  canvas.addEventListener('click', (e) => {
-    if (!state.text) return;
-    const rect = container.getBoundingClientRect();
-    const textRatioEffective = state.fullText ? 1 : state.textRatio;
-    const splitYDisplay = rect.top + rect.height * textRatioEffective;
-    if (e.clientY >= splitYDisplay) return; // only handle taps inside the text area (top)
-
-    const canvasX = (e.clientX - rect.left) / rect.width * SIZE_W;
-    const canvasY = (e.clientY - rect.top) / rect.height * SIZE_H;
-
-    const hit = state.wordBoxes.find(b =>
-      canvasX >= b.x0 && canvasX <= b.x1 && canvasY >= b.y0 && canvasY <= b.y1
-    );
-    if (!hit) return;
-
-    if (state.redWords.has(hit.idx)) state.redWords.delete(hit.idx);
-    else state.redWords.add(hit.idx);
-    drawCard();
-  });
-
-  canvas.addEventListener('pointerup', (e) => {
-    imgDragging = false;
-    try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
-  });
-  canvas.addEventListener('pointercancel', () => { imgDragging = false; });
-
-  pickVideoBtn.addEventListener('click', () => {
-    videoInput.click();
-  });
-
-  fullTextToggle.addEventListener('change', () => {
-    state.fullText = fullTextToggle.checked;
-    fullTextExtras.style.display = state.fullText ? 'flex' : 'none';
-    drawCard();
-  });
-
-  randomGradientBtn.addEventListener('click', () => {
-    const [c1, c2] = randomGradientColors();
-    const contrast = contrastFor([c1, c2]);
-    state.customBg = { bgColors: [c1, c2], text: contrast.text, highlight: contrast.highlight };
-    buildSwatches();
-    drawCard();
-  });
-
-  bgColorPicker.addEventListener('input', () => {
-    const c = bgColorPicker.value;
-    const contrast = contrastFor([c]);
-    state.customBg = { bgColors: [c], text: contrast.text, highlight: contrast.highlight };
-    buildSwatches();
-    drawCard();
-  });
-
-  // ---- Video select → pick a cover frame from it ----
-  // The final card is a still image, so instead of an image file we let the
-  // user pick a video and grab whichever frame they like as the "cover"
-  // (drawn onto an offscreen canvas). Everything downstream — zoom, drag to
-  // reposition, crop — works exactly as it did with a static image, because
-  // a <canvas> behaves the same as an <img> for ctx.drawImage() and has the
-  // same .width/.height.
-  let currentVideoURL = null;
-  let pendingReset = false;
-
-  function captureCoverFrame(resetView) {
-    if (!videoSource.videoWidth || !videoSource.videoHeight) return;
-    coverCaptureCanvas.width = videoSource.videoWidth;
-    coverCaptureCanvas.height = videoSource.videoHeight;
-    coverCtx.drawImage(videoSource, 0, 0, coverCaptureCanvas.width, coverCaptureCanvas.height);
-    state.image = coverCaptureCanvas;
-    if (resetView) {
-      state.zoom = 1;
-      state.centerX = coverCaptureCanvas.width / 2;
-      state.centerY = coverCaptureCanvas.height / 2;
-      zoomInput.value = 100;
-      zoomVal.textContent = 100;
+    if(hasClips){
+      const clip = clips[currentClipIdx];
+      if(clip.type === 'video') drawVideoFrame();
+      else drawImageFrame(clip);
     }
-    drawCard();
+
+    const layout = getLayout();
+    drawCaptionBox(currentWordIndex());
+
+    if(transitioning && transitionSnapshot){
+      const p = (performance.now() - transitionStart)/1000/TRANSITION_SEC;
+      if(p >= 1){
+        transitioning = false;
+      } else {
+        ctx.globalAlpha = 1 - p;
+        ctx.drawImage(transitionSnapshot, 0, 0);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    drawWatermark();
   }
 
-  videoInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (currentVideoURL) URL.revokeObjectURL(currentVideoURL);
-    currentVideoURL = URL.createObjectURL(file);
-    pendingReset = true;
-    videoSource.src = currentVideoURL;
-    videoSource.load();
+  // ---------- Preview playback ----------
+  btnPlay.addEventListener('click', function(){
+    if(!hasClips) return;
+    if(previewing){
+      previewing = false;
+      video.pause();
+      narrationAudio.pause();
+      btnPlay.textContent = '▶ Preview';
+      cancelAnimationFrame(rafId);
+      return;
+    }
+    currentClipIdx = 0;
+    globalElapsedBase = 0;
+    previewing = true;
+    btnPlay.textContent = '⏸ Pause';
+    if(narrationAudio.src){ narrationAudio.currentTime = 0; narrationAudio.play().catch(function(){}); }
+    activateClip(0, previewLoop);
   });
 
-  videoSource.addEventListener('loadedmetadata', () => {
-    const dur = isFinite(videoSource.duration) && videoSource.duration > 0 ? videoSource.duration : 1;
-    coverScrubber.min = 0;
-    coverScrubber.max = dur;
-    coverScrubber.step = Math.max(0.01, dur / 200);
-    coverScrubber.value = 0;
-    coverTimeVal.textContent = '0.0';
-    coverFrameRow.style.display = 'flex';
-    saveVideoBtn.disabled = false;
-    // Seek to the first frame so a cover is captured immediately.
-    videoSource.currentTime = 0;
-  });
+  function previewLoop(){
+    if(!previewing) return;
+    drawStaticFrame();
+    timecodeEl.textContent = fmtTime(totalElapsed()) + ' / ' + fmtTime(effectiveDuration);
 
-  videoSource.addEventListener('seeked', () => {
-    captureCoverFrame(pendingReset);
-    pendingReset = false;
-  });
+    const usedDur = clips[currentClipIdx].usedDuration;
+    if(getLocalElapsed() >= usedDur - 0.03){
+      advance(function(){ rafId = requestAnimationFrame(previewLoop); }, function(){
+        previewing = false;
+        video.pause();
+        narrationAudio.pause();
+        btnPlay.textContent = '▶ Preview';
+      });
+      return;
+    }
+    rafId = requestAnimationFrame(previewLoop);
+  }
 
-  coverScrubber.addEventListener('input', () => {
-    coverTimeVal.textContent = parseFloat(coverScrubber.value).toFixed(1);
-    videoSource.currentTime = parseFloat(coverScrubber.value);
-  });
-
-  factText.addEventListener('input', () => {
-    state.text = factText.value;
-    state.redWords.clear();
-    drawCard();
-  });
-  fontSizeInput.addEventListener('input', () => {
-    state.fontSize = parseInt(fontSizeInput.value, 10);
-    fontSizeVal.textContent = state.fontSize;
-    drawCard();
-  });
-  zoomInput.addEventListener('input', () => {
-    state.zoom = parseInt(zoomInput.value, 10) / 100;
-    zoomVal.textContent = zoomInput.value;
-    drawCard();
-  });
-
-  document.getElementById('saveBtn').addEventListener('click', () => {
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'RelationshipCues_' + Date.now() + '.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    }, 'image/png');
-  });
-
-  // ---- Save Video: records the card WITH the video actually playing behind
-  // the text/watermark, using canvas.captureStream() + MediaRecorder. Output
-  // is .webm (or .mp4 where the browser supports recording it) since that's
-  // what MediaRecorder can produce — there is no in-browser way to write a
-  // classic .mp4/H.264 file without a much heavier encoding library. ----
-  function pickRecorderMimeType() {
+  // ---------- Export ----------
+  function pickMime(){
     const candidates = [
-      'video/mp4;codecs=h264,aac',
-      'video/mp4',
-      'video/webm;codecs=vp9,opus',
-      'video/webm;codecs=vp8,opus',
-      'video/webm'
+      'video/mp4;codecs=h264,aac','video/mp4',
+      'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'
     ];
-    return candidates.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || null;
+    for(const m of candidates){
+      if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return '';
   }
 
-  saveVideoBtn.addEventListener('click', async () => {
-    if (!videoSource.src || !isFinite(videoSource.duration) || videoSource.duration <= 0) {
-      alert('Pehle ek video select karo.');
-      return;
-    }
-    if (!window.MediaRecorder || !canvas.captureStream) {
-      alert('Ye browser video recording support nahi karta. Chrome ya Safari (latest) try karo.');
-      return;
-    }
-    const mimeType = pickRecorderMimeType();
-    if (!mimeType) {
-      alert('Ye browser koi supported video format record nahi kar pa raha.');
-      return;
-    }
+  function ensureAudioGraph(){
+    if(audioGraphReady) return true;
+    try{
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioCtx();
+      const sourceEl = narrationAudio.src ? narrationAudio : video;
+      const source = audioCtx.createMediaElementSource(sourceEl);
+      audioDestination = audioCtx.createMediaStreamDestination();
+      source.connect(audioDestination);
+      source.connect(audioCtx.destination);
+      audioGraphReady = true;
+    }catch(err){ audioGraphReady = false; }
+    return audioGraphReady;
+  }
 
-    const resumeCoverTime = videoSource.currentTime;
-    saveVideoBtn.disabled = true;
-    pickVideoBtn.disabled = true;
-    document.getElementById('saveBtn').disabled = true;
-    saveVideoBtn.textContent = '⏳ Recording...';
-
-    try {
-      const fps = 30;
-      const stream = canvas.captureStream(fps);
-
-      // Try to carry the video's own audio track into the recording.
-      try {
-        if (videoSource.captureStream) {
-          const vStream = videoSource.captureStream();
-          vStream.getAudioTracks().forEach(t => stream.addTrack(t));
-        }
-      } catch (err) { /* no audio track available — silent export is fine */ }
-
-      const chunks = [];
-      const recorder = new MediaRecorder(stream, { mimeType });
-      recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-      const stopped = new Promise(resolve => { recorder.onstop = resolve; });
-
-      liveVideoMode = true;
-      videoSource.currentTime = 0;
-      await new Promise(resolve => {
-        const onSeeked = () => { videoSource.removeEventListener('seeked', onSeeked); resolve(); };
-        videoSource.addEventListener('seeked', onSeeked);
-      });
-
-      await videoSource.play();
-      recorder.start();
-
-      await new Promise(resolve => {
-        function frameLoop() {
-          if (videoSource.paused || videoSource.ended) { resolve(); return; }
-          drawCard();
-          requestAnimationFrame(frameLoop);
-        }
-        requestAnimationFrame(frameLoop);
-      });
-
-      recorder.stop();
-      await stopped;
-
-      const blob = new Blob(chunks, { type: mimeType });
-      const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'RelationshipCues_' + Date.now() + '.' + ext;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
-    } catch (err) {
-      alert('Video record nahi ho payi: ' + err.message);
-    } finally {
-      videoSource.pause();
-      liveVideoMode = false;
-      videoSource.currentTime = resumeCoverTime;
-      saveVideoBtn.disabled = false;
-      pickVideoBtn.disabled = false;
-      document.getElementById('saveBtn').disabled = false;
-      saveVideoBtn.textContent = '🎬 Save Video';
-    }
+  btnExport.addEventListener('click', function(){
+    if(isRecording || !hasClips) return;
+    layoutCache = null;
+    if(previewing){ previewing = false; cancelAnimationFrame(rafId); }
+    startExport();
   });
 
-  window.addEventListener('resize', drawCard);
-  window.addEventListener('load', drawCard);
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(drawCard);
+  function startExport(){
+    isRecording = true;
+    btnExport.disabled = true;
+    btnPlay.disabled = true;
+    downloadBox.style.display = 'none';
+    progressFill.style.width = '0%';
+    statusLine.className = 'status-line';
+    statusLine.textContent = 'Export shuru ho raha hai...';
+
+    chosenMime = pickMime();
+    if(!chosenMime){
+      statusLine.className = 'status-line error';
+      statusLine.textContent = 'Yeh browser video recording support nahi karta. Chrome ya Edge try karein.';
+      isRecording = false;
+      btnExport.disabled = false;
+      btnPlay.disabled = false;
+      return;
+    }
+
+    const audioOk = ensureAudioGraph();
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+    const canvasStream = canvas.captureStream(30);
+    let combinedStream = canvasStream;
+    if(audioOk && audioDestination){
+      const audioTracks = audioDestination.stream.getAudioTracks();
+      if(audioTracks.length) combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+    }
+
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(combinedStream, { mimeType: chosenMime });
+    mediaRecorder.ondataavailable = function(e){ if(e.data && e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = finishExport;
+
+    currentClipIdx = 0;
+    globalElapsedBase = 0;
+
+    activateClip(0, function(){
+      if(narrationAudio.src){ narrationAudio.currentTime = 0; narrationAudio.play().catch(function(){}); }
+      mediaRecorder.start();
+      exportLoop();
+    });
   }
-  drawCard();
+
+  function exportLoop(){
+    if(!isRecording) return;
+    drawStaticFrame();
+    const elapsed = totalElapsed();
+    const pct = Math.min(100, (elapsed/effectiveDuration)*100);
+    progressFill.style.width = pct + '%';
+    statusLine.textContent = 'Recording... ' + fmtTime(elapsed) + ' / ' + fmtTime(effectiveDuration);
+
+    const usedDur = clips[currentClipIdx].usedDuration;
+    if(getLocalElapsed() >= usedDur - 0.03){
+      advance(function(){ rafId = requestAnimationFrame(exportLoop); }, stopExportRecording);
+      return;
+    }
+    rafId = requestAnimationFrame(exportLoop);
+  }
+
+  function stopExportRecording(){
+    video.pause();
+    narrationAudio.pause();
+    isRecording = false;
+    mediaRecorder.stop();
+  }
+
+  function finishExport(){
+    const blob = new Blob(recordedChunks, { type: chosenMime.split(';')[0] });
+    const ext = chosenMime.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
+    lastBlob = blob;
+    lastFilename = 'caption-video.' + ext;
+    downloadBtn.disabled = false;
+    downloadBtn.textContent = '⬇ Download Video';
+    downloadSize.textContent = (blob.size/1024/1024).toFixed(1) + ' MB · ' + ext.toUpperCase();
+    downloadBox.style.display = 'block';
+    progressFill.style.width = '100%';
+    statusLine.className = 'status-line ready';
+    statusLine.textContent = 'Export complete.';
+    btnExport.disabled = false;
+    btnPlay.disabled = false;
+  }
+
+  // ---------- Aspect ratio switch (4:5 Feed / 9:16 Reels & Shorts) ----------
+  const frameWrapEl = document.querySelector('.frame-wrap');
+  const ratioInputs = document.querySelectorAll('input[name="aspectRatio"]');
+  ratioInputs.forEach(function(input){
+    input.addEventListener('change', function(){
+      if(!this.checked) return;
+      if(isRecording){ this.checked = (CANVAS_H === 1280) ? (this.value === '9:16') : (this.value === '4:5'); return; }
+
+      if(this.value === '9:16'){ CANVAS_W = 720; CANVAS_H = 1280; }
+      else { CANVAS_W = 720; CANVAS_H = 900; }
+
+      canvas.width = CANVAS_W;
+      canvas.height = CANVAS_H;
+      snapCanvas.width = CANVAS_W;
+      snapCanvas.height = CANVAS_H;
+      if(frameWrapEl) frameWrapEl.style.aspectRatio = CANVAS_W + ' / ' + CANVAS_H;
+
+      layoutCache = null;
+      drawStaticFrame();
+    });
+  });
+
+  drawStaticFrame();
+})();
 </script>
+
+<script>
+(function(){
+  var stickyBar = document.getElementById('stickyExport');
+  var stickyBtn = document.getElementById('stickyExportBtn');
+  var exportCard = document.getElementById('exportCard');
+  if(!stickyBar || !stickyBtn || !exportCard) return;
+
+  stickyBtn.addEventListener('click', function(){
+    exportCard.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      var visible = entries[0].isIntersecting;
+      stickyBar.classList.toggle('show', !visible);
+    }, {threshold:0.15});
+    io.observe(exportCard);
+  } else {
+    stickyBar.classList.add('show');
+  }
+})();
+</script>
+
 </body>
 </html>
