@@ -95,6 +95,43 @@
   .download-box{margin-top:8px;display:none;border:1px solid var(--highlight);background:rgba(62,232,174,0.12);border-radius:7px;padding:9px;text-align:center;}
   .download-box .size{display:block;margin-top:2px;font-family:var(--mono);font-size:10px;color:var(--muted);}
 
+
+  /* ---- Cover maker ---- */
+  .cover-tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--panel-border);border-radius:5px;padding:1px 6px;}
+  .field-label{display:block;margin:9px 0 4px;color:var(--muted);font-size:10.5px;}
+  .field-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:9px;}
+  .field-row .field-label{margin:0;}
+  select.sel{width:100%;background:#14151C;border:1px solid var(--panel-border);border-radius:6px;color:var(--text);padding:8px 9px;font-size:12px;font-family:var(--sans);}
+  select.sel:focus{border-color:var(--highlight);}
+  input[type=range]{width:100%;accent-color:var(--highlight);margin:4px 0;}
+  .mini-btn{background:#14151C;border:1px solid var(--panel-border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:11.5px;cursor:pointer;min-height:30px;}
+  .mini-btn:hover:not(:disabled){border-color:var(--highlight);}
+  .mini-btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .cover-wrap{background:#000;border:1px solid var(--panel-border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/5;width:100%;max-width:300px;margin:10px auto 0;}
+  canvas#coverCanvas{width:100%;height:100%;display:block;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;}
+  canvas#coverCanvas.dragging{cursor:grabbing;}
+  .cover-hint{margin:6px 0 0;text-align:center;color:var(--muted);font-size:10.5px;}
+  .size-row{display:flex;align-items:center;gap:8px;}
+  .size-row input[type=range]{flex:1;}
+  .size-row .mini-btn{width:34px;padding:5px 0;font-size:15px;line-height:1;}
+  .size-val{font-family:var(--mono);font-size:11px;color:var(--text);min-width:26px;text-align:right;}
+  .swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--panel-border);padding:0;cursor:pointer;}
+  .swatch[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 2px var(--highlight);}
+  .swatch-custom{position:relative;overflow:hidden;background:conic-gradient(#E5595C,#F2B705,#3EE8AE,#4DB8FF,#FF6FB1,#E5595C);}
+  .swatch-custom input{position:absolute;inset:-6px;width:44px;height:44px;opacity:0;cursor:pointer;}
+  .seg{display:flex;border:1px solid var(--panel-border);border-radius:6px;overflow:hidden;}
+  .seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:6px;background:#14151C;border:none;color:var(--muted);font-size:12px;cursor:pointer;}
+  .seg button+button{border-left:1px solid var(--panel-border);}
+  .seg button[aria-pressed="true"]{background:#242736;color:var(--text);box-shadow:inset 0 -2px 0 var(--highlight);}
+  .bg-opts{margin-top:2px;padding:0 0 2px;}
+  .toggle-row{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;}
+  .toggle-row label{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text);cursor:pointer;}
+  .toggle-row input{accent-color:var(--highlight);margin:0;width:16px;height:16px;}
+  .cover-actions{display:flex;gap:8px;margin-top:12px;}
+  .cover-actions .btn{flex:1;}
+  .cover-actions .mini-btn{flex:none;min-height:40px;padding:0 14px;}
+
   footer.foot{max-width:1180px;margin:0 auto;padding:5px 14px 14px;color:var(--muted);font-size:10px;line-height:1.45;}
   @media (max-width:860px){ footer.foot{padding-bottom:90px;} }
 
@@ -118,7 +155,7 @@
 <header class="top">
   <div class="mark">CAPTION DECK</div>
   <h1>4:5 Reel Maker — word-highlight captions</h1>
-  <p>Video/image jodo, caption add karo (type ya audio se auto), export karo.</p>
+  <p>Video/image jodo, caption add karo (type ya audio se auto), cover banao, export karo.</p>
 </header>
 
 <div class="app">
@@ -162,18 +199,97 @@
       <div class="card-head"><span class="step">02</span><h2>Caption — type karein ya audio se auto</h2></div>
       <details>
         <summary>Kaise kaam karta hai</summary>
-        <p>Text khud likho, ya English audio (voiceover) attach karo — transcript + har word ka exact timing auto-generate hoga. Audio attach karne par woh export ki soundtrack ban jaati hai (shuru aur end mein 1-1 second ka silent pad apne aap add ho jaata hai), aur attached video/images us audio ki poori length ke hisaab se automatically adjust ho jaate hain.</p>
+        <p>Text khud likho, ya English audio (voiceover) attach karo — transcript + har word ka exact timing auto-generate hoga. Audio attach karne par woh export ki soundtrack ban jaati hai, aur attached video/images us audio ki poori length ke hisaab se automatically adjust ho jaate hain — audio aur video/caption ekdum saath shuru aur saath khatam hote hain, koi extra silent pad nahi.</p>
       </details>
       <label class="file-drop" for="audioInput">
         <span id="audioDropLabel">Audio track (optional, auto-transcribe)</span>
         <input type="file" id="audioInput" accept="audio/*">
       </label>
       <div class="status-line" id="transcribeStatus" style="display:none;"></div>
+      <div class="field-row" id="syncRow" style="display:none;align-items:center;">
+        <span class="field-label" style="margin:0;">Highlight sync <span id="syncVal" style="color:var(--text);font-family:var(--mono);">+600ms</span></span>
+      </div>
+      <input type="range" id="syncOffset" min="-600" max="600" step="10" value="600" style="display:none;">
+      <div class="hint" id="syncHint" style="display:none;margin:2px 0 0;">Agar highlight voiceover se aage/peeche chal raha hai, is slider se milaiye — right = highlight thoda der se (delay), left = jaldi (early).</div>
       <textarea id="paragraphInput" placeholder="Caption paragraph yahan likho..." style="margin-top:10px;"></textarea>
     </div>
 
+    <div class="card" id="coverCard">
+      <div class="card-head"><span class="step">03</span><h2>Cover banayein</h2><span class="cover-tag" id="coverRatioTag">4:5</span></div>
+      <details>
+        <summary>Kaise kaam karta hai</summary>
+        <p>Cover us ratio mein banta hai jo upar 4:5 / 9:16 switch mein chuna hai. Background video ka koi bhi frame ho sakta hai, ya apni image. Text wahi bold font mein aata hai jo video caption mein hai, aur dark outline ke saath taaki image par saaf dikhe. Text ko Left ya Center align karo, drag karke kahin bhi rakho, size slider se badlo, chaho to text ke piche apni pasand ke colour ka background lagao, aur colour chun kar kisi word par tap karo (usi colour par dobara tap = wapas white). Cover PNG mein download hota hai — video mein judta nahi.</p>
+      </details>
+
+      <label class="field-label" for="coverSource">Background</label>
+      <select class="sel" id="coverSource" disabled><option>Pehle media ya image chuno</option></select>
+
+      <div id="coverScrubWrap" style="display:none;">
+        <label class="field-label" for="coverScrub">Video frame — <span id="coverScrubTime">0:00</span></label>
+        <input type="range" id="coverScrub" min="0" max="1" step="0.05" value="0">
+      </div>
+
+      <label class="file-drop" for="coverImageInput" style="display:block;margin-top:9px;">
+        <span id="coverImageLabel">Ya apni image upload karein</span>
+        <input type="file" id="coverImageInput" accept="image/*">
+      </label>
+
+      <div class="field-row">
+        <label class="field-label" for="coverText">Cover text</label>
+        <button class="mini-btn" type="button" id="coverFromCaption">Caption se lo</button>
+      </div>
+      <textarea id="coverText" placeholder="Cover par jo likhna hai wo yahan likho... (Enter se nayi line)" style="margin-top:4px;min-height:56px;"></textarea>
+
+      <div class="cover-wrap" id="coverWrap">
+        <canvas id="coverCanvas" width="720" height="900"></canvas>
+        <div class="frame-empty" id="coverEmpty" style="background:#000;">
+          <div class="icon">▭</div>
+          <div>Media ya image chuno,<br>cover yahan dikhega</div>
+        </div>
+      </div>
+      <p class="cover-hint">Text ko drag karo · colour chun kar word par tap karo</p>
+
+      <span class="field-label">Text size</span>
+      <div class="size-row">
+        <button class="mini-btn" type="button" id="coverSizeMinus" aria-label="Text chhota karein">−</button>
+        <input type="range" id="coverSize" min="28" max="160" step="2" value="72" aria-label="Text size">
+        <button class="mini-btn" type="button" id="coverSizePlus" aria-label="Text bada karein">+</button>
+        <span class="size-val" id="coverSizeVal">72</span>
+      </div>
+
+      <span class="field-label">Alignment</span>
+      <div class="seg" role="group" aria-label="Text alignment">
+        <button type="button" id="coverAlignLeft" aria-pressed="true"><svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 1.5h12M1 6h8M1 10.5h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>Left</button>
+        <button type="button" id="coverAlignCenter" aria-pressed="false"><svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 1.5h12M3 6h8M2 10.5h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>Center</button>
+      </div>
+
+      <span class="field-label">Word colour</span>
+      <div class="swatches" id="coverSwatches"></div>
+
+      <div class="toggle-row" style="margin-top:12px;">
+        <label><input type="checkbox" id="coverBgOn"> Text ke piche background</label>
+      </div>
+      <div class="bg-opts" id="coverBgOpts" style="display:none;">
+        <span class="field-label">Background colour</span>
+        <div class="swatches" id="coverBgSwatches"></div>
+        <label class="field-label" for="coverBgOpacity">Opacity — <span id="coverBgOpacityVal">100%</span></label>
+        <input type="range" id="coverBgOpacity" min="20" max="100" step="5" value="100">
+      </div>
+
+      <div class="toggle-row">
+        <label><input type="checkbox" id="coverOutline" checked> Text outline</label>
+        <label><input type="checkbox" id="coverWatermark" checked> Watermark</label>
+      </div>
+
+      <div class="cover-actions">
+        <button class="btn" id="coverDownloadBtn" type="button" disabled>⬇ Cover Download (PNG)</button>
+        <button class="mini-btn" id="coverReset" type="button">Reset</button>
+      </div>
+      <div class="status-line" id="coverStatus">Cover ke liye media ya image chahiye.</div>
+    </div>
+
     <div class="card" id="exportCard">
-      <div class="card-head"><span class="step">03</span><h2>Export</h2></div>
+      <div class="card-head"><span class="step">04</span><h2>Export</h2></div>
       <button class="btn" id="btnExport" disabled>Video Export Karein</button>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       <div class="status-line" id="statusLine">Media aur text dono chahiye export ke liye.</div>
@@ -206,8 +322,8 @@
   const IMAGE_MIN_SEC = 5, IMAGE_MAX_SEC = 6;
   const IMAGE_REF_WEIGHT = (IMAGE_MIN_SEC + IMAGE_MAX_SEC) / 2; // reference "weight" used to split narration-driven duration evenly between images
   const TRANSITION_SEC = 0.4;
-  const AUDIO_LEAD_PAD = 1;   // silent second added before narration starts
-  const AUDIO_TAIL_PAD = 1;   // silent second added after narration ends
+  const AUDIO_LEAD_PAD = 0;   // silent second added before narration starts (0 = disabled)
+  const AUDIO_TAIL_PAD = 0;   // silent second added after narration ends (0 = disabled)
   const VIDEO_RATE_MIN = 0.25, VIDEO_RATE_MAX = 4; // safety clamp when speeding up/slowing a video to match narration
 
   // Ken Burns movement combinations (>= 9 distinct patterns). Pan amplitude here is chosen
@@ -256,6 +372,11 @@
   const audioInput = document.getElementById('audioInput');
   const audioDropLabel = document.getElementById('audioDropLabel');
   const transcribeStatus = document.getElementById('transcribeStatus');
+  const syncRow = document.getElementById('syncRow');
+  const syncOffsetEl = document.getElementById('syncOffset');
+  const syncValEl = document.getElementById('syncVal');
+  const syncHintEl = document.getElementById('syncHint');
+  let syncOffsetMs = Number(syncOffsetEl.value) || 0; // +ve = highlight thoda der se (delay), -ve = jaldi (early)
   const btnPlay = document.getElementById('btnPlay');
   const btnExport = document.getElementById('btnExport');
   const timecodeEl = document.getElementById('timecode');
@@ -418,12 +539,14 @@
     const finalClips = narrationActive ? distributeClipsAcrossNarration(rawClips) : trimClipsToFit(rawClips);
     displayClips = finalClips;
 
-    // Wrap with silent lead/tail freeze pads so the padded 1s of silence at each end of the
+    // Wrap with silent lead/tail freeze pads so a padded second of silence at each end of the
     // narration audio still shows a held frame instead of jump-cutting straight into content.
-    if(narrationActive && finalClips.length){
-      const leadPad = makeFreezePad(finalClips[0], 'start', AUDIO_LEAD_PAD);
-      const tailPad = makeFreezePad(finalClips[finalClips.length - 1], 'end', AUDIO_TAIL_PAD);
-      clips = [leadPad, ...finalClips, tailPad];
+    // Skipped entirely when a pad's duration is 0, so audio and video start/end together exactly.
+    if(narrationActive && finalClips.length && (AUDIO_LEAD_PAD > 0 || AUDIO_TAIL_PAD > 0)){
+      const wrapped = [...finalClips];
+      if(AUDIO_TAIL_PAD > 0) wrapped.push(makeFreezePad(finalClips[finalClips.length - 1], 'end', AUDIO_TAIL_PAD));
+      if(AUDIO_LEAD_PAD > 0) wrapped.unshift(makeFreezePad(finalClips[0], 'start', AUDIO_LEAD_PAD));
+      clips = wrapped;
       effectiveDuration = AUDIO_LEAD_PAD + finalClips.reduce((s,c) => s + c.usedDuration, 0) + AUDIO_TAIL_PAD;
     } else {
       clips = finalClips;
@@ -436,6 +559,7 @@
 
     dropLabel.textContent = displayClips.length + ' clip(s) attached';
     renderClipList(rawClips.length);
+    coverRefreshSources();
 
     if(hasClips){
       frameEmpty.style.display = 'none';
@@ -540,7 +664,7 @@
       clipListEl.appendChild(li);
     });
     totalLine.style.display = 'block';
-    totalLine.innerHTML = 'Total used: <strong>' + fmtTime(effectiveDuration) + '</strong> / ' + Math.round(effectiveMaxSeconds) + 's max' + (wordTimestamps ? ' (audio track length + 1s pad se set)' : '');
+    totalLine.innerHTML = 'Total used: <strong>' + fmtTime(effectiveDuration) + '</strong> / ' + Math.round(effectiveMaxSeconds) + 's max' + (wordTimestamps ? ' (audio track length se set)' : '');
     if(rawCount > displayClips.length || displayClips.some(c => c.trimmed)){
       lengthWarn.style.display = 'block';
       lengthWarn.textContent = 'Combined length ' + Math.round(effectiveMaxSeconds) + ' second se zyaada thi — extra hissa/clips trim/skip kar diye gaye.';
@@ -617,8 +741,19 @@
     // manual edits can desync from the auto-detected word timings, so fall back to
     // uniform timing the moment the user types — activeWordFor() already guards on
     // word-count match, but clearing here keeps the "auto" badge accurate.
-    if(wordTimestamps && wordTimestamps.length !== getWords().length) wordTimestamps = null;
+    if(wordTimestamps && wordTimestamps.length !== getWords().length){
+      wordTimestamps = null;
+      syncRow.style.display = 'none';
+      syncOffsetEl.style.display = 'none';
+      syncHintEl.style.display = 'none';
+    }
     updateExportReady();
+    drawStaticFrame();
+  });
+
+  syncOffsetEl.addEventListener('input', function(){
+    syncOffsetMs = Number(syncOffsetEl.value) || 0;
+    syncValEl.textContent = (syncOffsetMs > 0 ? '+' : '') + syncOffsetMs + 'ms';
     drawStaticFrame();
   });
 
@@ -719,11 +854,30 @@
       const transcriber = await getWhisperPipeline();
       transcribeStatus.textContent = 'Transcribe ho raha hai...';
       const output = await transcriber(decoded.data, { return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
-      const chunks = output.chunks || [];
+      const chunks = (output.chunks || []).filter(function(c){ return c.text && c.text.trim(); });
+
+      // Whisper transcribes long audio in ~30s chunks and stitches the word timestamps back
+      // together; each chunk's internal clock can be fractionally off real time, and that small
+      // error compounds chunk after chunk — which is exactly why the highlight tracks fine at
+      // the start of a clip and drifts further behind/ahead as the narration goes on. Fix: scale
+      // every timestamp so the *last* detected word lines up with the audio's real, measured
+      // duration — this removes the compounding drift across the whole timeline, not just a
+      // fixed offset at one point. Clamped so a bad/partial transcript can't overcorrect wildly.
+      let driftScale = 1;
+      if(chunks.length){
+        const lastChunk = chunks[chunks.length - 1];
+        const lastEnd = (lastChunk.timestamp[1] != null ? lastChunk.timestamp[1] : lastChunk.timestamp[0]);
+        if(lastEnd > 0.05) driftScale = Math.max(0.7, Math.min(1.3, narrationDuration / lastEnd));
+      }
+
       // +AUDIO_LEAD_PAD shifts every word so it still lines up once we pad the playback track with a silent lead-in second
-      wordTimestamps = chunks
-        .filter(function(c){ return c.text && c.text.trim(); })
-        .map(function(c){ return { text: c.text.trim(), start: c.timestamp[0] + AUDIO_LEAD_PAD, end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) + AUDIO_LEAD_PAD }; });
+      wordTimestamps = chunks.map(function(c){
+        return {
+          text: c.text.trim(),
+          start: c.timestamp[0] * driftScale + AUDIO_LEAD_PAD,
+          end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) * driftScale + AUDIO_LEAD_PAD
+        };
+      });
 
       paragraphInput.value = toProperCase((output.text || '').trim());
       layoutCache = null;
@@ -737,13 +891,19 @@
 
       audioDropLabel.textContent = file.name + ' attached';
       transcribeStatus.className = 'status-line ready';
-      transcribeStatus.textContent = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ' + 1s pad har taraf) — neeche text edit bhi kar sakte ho.';
+      transcribeStatus.textContent = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ') — neeche text edit bhi kar sakte ho.';
+      syncRow.style.display = 'flex';
+      syncOffsetEl.style.display = 'block';
+      syncHintEl.style.display = 'block';
     }catch(err){
       console.error('Transcription failed:', err);
       wordTimestamps = null;
       audioDropLabel.textContent = 'English audio track choose karein (optional, auto-transcribe)';
       transcribeStatus.className = 'status-line error';
       transcribeStatus.textContent = 'Auto-transcribe fail ho gaya (internet ya browser support issue). Neeche paragraph khud type kar sakte ho.';
+      syncRow.style.display = 'none';
+      syncOffsetEl.style.display = 'none';
+      syncHintEl.style.display = 'none';
     }finally{
       transcribing = false;
       updateExportReady();
@@ -880,7 +1040,12 @@
     const words = getWords();
     if(!words.length) return 0;
     if(wordTimestamps && wordTimestamps.length === words.length){
-      const t = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
+      const rawT = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
+      // Whisper's word-level start times tend to land slightly ahead of the actual spoken
+      // word, which makes the highlight visibly race the voiceover — syncOffsetMs (adjustable
+      // via the "Highlight sync" slider) shifts playback time back before we look the word up,
+      // so a positive offset delays the highlight to match what's actually being said.
+      const t = rawT - (syncOffsetMs / 1000);
       let idx = 0;
       for(let i = 0; i < wordTimestamps.length; i++){
         if(wordTimestamps[i].start <= t) idx = i; else break;
@@ -932,7 +1097,9 @@
     ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, CANVAS_W, CANVAS_H);
   }
 
-  function drawWatermark(){
+  function drawWatermark(){ drawWatermarkTo(ctx, CANVAS_W); }
+
+  function drawWatermarkTo(ctx, CANVAS_W){
     const fontSize = Math.max(15, Math.round(CANVAS_W * 0.032));
     const padOuter = Math.round(CANVAS_W * 0.035);
     const boxPadX = Math.round(fontSize * 0.55);
@@ -1171,8 +1338,556 @@
 
       layoutCache = null;
       drawStaticFrame();
+      coverOnRatioChange();
     });
   });
+
+  // ---------- Cover maker: video ke ratio mein cover (video frame ya manual image) ----------
+  const COVER_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  const COVER_SWATCHES = ['#FFFFFF', '#3EE8AE', '#F2B705', '#FF8A3D', '#E5595C', '#FF6FB1', '#4DB8FF'];
+  const COVER_BG_SWATCHES = ['#000000', '#FFFFFF', '#3EE8AE', '#F2B705', '#FF8A3D', '#E5595C', '#FF6FB1', '#4DB8FF'];
+  const COVER_DARK_TEXT = '#0A0A0A';
+  const COVER_EXPORT_WIDTH = 1080;
+
+  const coverCanvas = document.getElementById('coverCanvas');
+  const coverCtx = coverCanvas.getContext('2d');
+  const coverWrap = document.getElementById('coverWrap');
+  const coverEmpty = document.getElementById('coverEmpty');
+  const coverRatioTag = document.getElementById('coverRatioTag');
+  const coverSourceSel = document.getElementById('coverSource');
+  const coverScrubWrap = document.getElementById('coverScrubWrap');
+  const coverScrub = document.getElementById('coverScrub');
+  const coverScrubTime = document.getElementById('coverScrubTime');
+  const coverImageInput = document.getElementById('coverImageInput');
+  const coverImageLabel = document.getElementById('coverImageLabel');
+  const coverTextInput = document.getElementById('coverText');
+  const coverFromCaptionBtn = document.getElementById('coverFromCaption');
+  const coverSizeRange = document.getElementById('coverSize');
+  const coverSizeVal = document.getElementById('coverSizeVal');
+  const coverSizeMinus = document.getElementById('coverSizeMinus');
+  const coverSizePlus = document.getElementById('coverSizePlus');
+  const coverSwatchesEl = document.getElementById('coverSwatches');
+  const coverOutlineChk = document.getElementById('coverOutline');
+  const coverWatermarkChk = document.getElementById('coverWatermark');
+  const coverDownloadBtn = document.getElementById('coverDownloadBtn');
+  const coverResetBtn = document.getElementById('coverReset');
+  const coverAlignLeftBtn = document.getElementById('coverAlignLeft');
+  const coverAlignCenterBtn = document.getElementById('coverAlignCenter');
+  const coverBgChk = document.getElementById('coverBgOn');
+  const coverBgOpts = document.getElementById('coverBgOpts');
+  const coverBgSwatchesEl = document.getElementById('coverBgSwatches');
+  const coverBgOpacityRange = document.getElementById('coverBgOpacity');
+  const coverBgOpacityVal = document.getElementById('coverBgOpacityVal');
+  const coverStatus = document.getElementById('coverStatus');
+
+  const coverVideo = document.createElement('video');
+  coverVideo.playsInline = true;
+  coverVideo.muted = true;
+  coverVideo.preload = 'auto';
+  const coverFrameCanvas = document.createElement('canvas');
+
+  let coverSrc = null;          // { el, w, h } — current background (image element or captured video frame)
+  let coverSrcUrl = null;       // url of the media clip currently selected (null for manual image)
+  let coverManualImg = null, coverManualName = '';
+  let coverLoadToken = 0;
+  let coverFontSize = null;     // null = auto-fit like the video caption; number = user-chosen size
+  let coverPosCustom = false;   // false = text sits in the bottom-third box like the video caption
+  let coverLeftFrac = 0, coverTopFrac = 0;
+  let coverWordColors = [];     // per word index: colour string or null (= default white)
+  let coverActiveColor = COVER_SWATCHES[1];
+  let coverAlign = 'left';      // 'left' | 'center'
+  let coverBgColor = COVER_BG_SWATCHES[0];
+  let coverBgOpacity = 1;
+  let coverDrag = null;
+  let coverLast = null;         // { L, pos } from the latest render — used for hit-testing
+
+  function coverTokenize(){
+    let idx = 0;
+    const paras = [];
+    coverTextInput.value.split(/\r?\n/).forEach(function(line){
+      const ws = line.trim().split(/\s+/).filter(Boolean);
+      if(ws.length) paras.push(ws.map(function(t){ return { text: t, index: idx++ }; }));
+    });
+    return { paras: paras, count: idx };
+  }
+
+  function coverBuildLayout(context, W, H){
+    const tok = coverTokenize();
+    if(!tok.count) return null;
+    const maxWidth = W - LEFT_PAD - RIGHT_PAD;
+    const boxHeight = H / 3;
+
+    function layoutAt(size){
+      context.font = '700 ' + size + 'px ' + COVER_FONT;
+      let lines = [];
+      tok.paras.forEach(function(p){ lines = lines.concat(buildWordLayout(context, p, maxWidth)); });
+      return { size: size, lh: size * 1.35, lines: lines };
+    }
+
+    let L;
+    if(coverFontSize){
+      L = layoutAt(coverFontSize);
+    } else {
+      let s = 80;
+      L = layoutAt(s);
+      while(s > 32 && L.lines.length * L.lh > boxHeight - 44){ s -= 4; L = layoutAt(s); }
+    }
+    L.lineW = L.lines.map(function(line){
+      const last = line[line.length - 1];
+      return last.x + last.width;
+    });
+    const bw = L.lineW.reduce(function(m, w){ return Math.max(m, w); }, 0);
+    L.lineOff = L.lineW.map(function(w){ return coverAlign === 'center' ? (bw - w) / 2 : 0; });
+    L.blockW = bw;
+    L.blockH = L.lines.length * L.lh;
+    context.font = '700 ' + L.size + 'px ' + COVER_FONT;
+    return L;
+  }
+
+  function coverLuma(hex){
+    const n = parseInt(hex.slice(1), 16);
+    return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  }
+  // default word colour flips to dark when the chosen background is light, so text stays readable
+  function coverDefaultTextColor(){
+    return (coverBgChk.checked && coverBgOpacity >= 0.5 && coverLuma(coverBgColor) > 0.6) ? COVER_DARK_TEXT : '#FFFFFF';
+  }
+  function coverPadX(L){ return coverBgChk.checked ? L.size * 0.3 : 0; }
+
+  function coverRoundRect(c, x, y, w, h, r){
+    r = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function coverBlockPos(L, W, H){
+    let left, top;
+    if(coverPosCustom){ left = coverLeftFrac * W; top = coverTopFrac * H; }
+    else {
+      left = (coverAlign === 'center') ? (W - L.blockW) / 2 : LEFT_PAD;
+      top = (H - H/3) + (H/3 - L.blockH) / 2;
+    }
+    const pad = coverPadX(L);
+    left = Math.max(pad, Math.min(W - L.blockW - pad, left));
+    top = Math.max(0, Math.min(H - L.blockH, top));
+    return { left: left, top: top };
+  }
+
+  function coverDrawBase(context, W, H){
+    const targetAspect = W / H;
+    let sx, sy, sw, sh;
+    if(coverSrc.w / coverSrc.h > targetAspect){ sh = coverSrc.h; sw = sh * targetAspect; sx = (coverSrc.w - sw) / 2; sy = 0; }
+    else { sw = coverSrc.w; sh = sw / targetAspect; sx = 0; sy = (coverSrc.h - sh) / 2; }
+    context.drawImage(coverSrc.el, sx, sy, sw, sh, 0, 0, W, H);
+  }
+
+  // Draws the cover in logical W x H units (caller may pre-scale the context for a bigger export).
+  function coverRender(context, W, H, opts){
+    opts = opts || {};
+    const scale = opts.scale || 1;
+    context.save();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, W, H);
+    if(coverSrc) coverDrawBase(context, W, H);
+
+    const L = coverBuildLayout(context, W, H);
+    let result = null;
+    if(L){
+      const pos = coverBlockPos(L, W, H);
+      context.font = '700 ' + L.size + 'px ' + COVER_FONT;
+      context.textAlign = 'left';
+      context.textBaseline = 'alphabetic';
+      const outline = coverOutlineChk.checked;
+      const defColor = coverDefaultTextColor();
+
+      if(coverBgChk.checked){
+        const padX = coverPadX(L);
+        context.save();
+        context.globalAlpha = coverBgOpacity;
+        context.fillStyle = coverBgColor;
+        L.lines.forEach(function(lineWords, li){
+          const baseline = pos.top + li * L.lh + L.lh * 0.78;
+          coverRoundRect(context, pos.left + L.lineOff[li] - padX, baseline - L.size * 0.95, L.lineW[li] + padX * 2, L.size * 1.25, L.size * 0.18);
+          context.fill();
+        });
+        context.restore();
+      }
+
+      context.lineJoin = 'round';
+      context.miterLimit = 2;
+      context.lineWidth = L.size * 0.16;
+      context.strokeStyle = '#000';
+      L.lines.forEach(function(lineWords, li){
+        const y = pos.top + li * L.lh + L.lh * 0.78;
+        lineWords.forEach(function(w){
+          const x = pos.left + L.lineOff[li] + w.x;
+          const fill = coverWordColors[w.index] || defColor;
+          const stroke = outline && fill !== COVER_DARK_TEXT;
+          // thick dark outline + soft shadow (drawn first) keep the text readable on any image
+          context.shadowColor = 'rgba(0,0,0,0.6)';
+          context.shadowBlur = L.size * (stroke ? 0.14 : 0.08) * scale;
+          if(stroke) context.strokeText(w.text, x, y);
+          context.fillStyle = fill;
+          if(!stroke) context.fillText(w.text, x, y);
+          context.shadowColor = 'transparent';
+          context.shadowBlur = 0;
+          if(stroke) context.fillText(w.text, x, y);
+        });
+      });
+
+      if(opts.guides){
+        context.strokeStyle = 'rgba(255,255,255,0.7)';
+        context.lineWidth = 2;
+        context.setLineDash([10, 8]);
+        context.strokeRect(pos.left - 8, pos.top - 4, L.blockW + 16, L.blockH + 8);
+      }
+      result = { L: L, pos: pos };
+    }
+
+    if(coverWatermarkChk.checked) drawWatermarkTo(context, W);
+    context.restore();
+    return result;
+  }
+
+  function coverRedraw(){
+    coverLast = coverRender(coverCtx, CANVAS_W, CANVAS_H, { guides: !!(coverDrag && coverDrag.moved) });
+    if(!coverFontSize && coverLast){
+      coverSizeRange.value = coverLast.L.size;
+      coverSizeVal.textContent = coverLast.L.size;
+    }
+  }
+
+  function coverUpdateState(){
+    const has = !!coverSrc;
+    coverEmpty.style.display = has ? 'none' : 'flex';
+    coverDownloadBtn.disabled = !has;
+    if(!has) coverStatus.textContent = 'Cover ke liye media ya image chahiye.';
+    else if(!coverTokenize().count) coverStatus.textContent = 'Cover text likho, phir download karo.';
+    else coverStatus.textContent = 'Taiyaar — ' + COVER_EXPORT_WIDTH + 'px PNG download hoga.';
+    coverStatus.className = 'status-line' + (has ? ' ready' : '');
+    coverRedraw();
+  }
+
+  // ----- background source -----
+  function coverRefreshSources(){
+    const prev = coverSourceSel.value;
+    coverSourceSel.innerHTML = '';
+    displayClips.forEach(function(c, i){
+      const o = document.createElement('option');
+      o.value = 'clip:' + i;
+      o.textContent = (c.type === 'image' ? '🖼 ' : '🎬 ') + c.name;
+      coverSourceSel.appendChild(o);
+    });
+    if(coverManualImg){
+      const o = document.createElement('option');
+      o.value = 'manual';
+      o.textContent = '🖼 (apni image) ' + coverManualName;
+      coverSourceSel.appendChild(o);
+    }
+    if(!coverSourceSel.options.length){
+      const o = document.createElement('option');
+      o.textContent = 'Pehle media ya image chuno';
+      coverSourceSel.appendChild(o);
+      coverSourceSel.disabled = true;
+      coverSrc = null; coverSrcUrl = null;
+      coverScrubWrap.style.display = 'none';
+      coverUpdateState();
+      return;
+    }
+    coverSourceSel.disabled = false;
+
+    // same selection as before (e.g. media rebuilt after audio attach)? keep it, don't reload
+    if(prev === 'manual' && coverManualImg){ coverSourceSel.value = 'manual'; return; }
+    if(coverSrcUrl){
+      for(let i = 0; i < displayClips.length; i++){
+        if(displayClips[i].url === coverSrcUrl){ coverSourceSel.value = 'clip:' + i; return; }
+      }
+    }
+    coverSourceSel.selectedIndex = 0;
+    coverApplySource();
+  }
+
+  function coverApplySource(){
+    const v = coverSourceSel.value;
+    coverScrubWrap.style.display = 'none';
+    if(v === 'manual' && coverManualImg){
+      coverSrcUrl = null;
+      coverSrc = { el: coverManualImg, w: coverManualImg.naturalWidth, h: coverManualImg.naturalHeight };
+      coverUpdateState();
+      return;
+    }
+    if(v.indexOf('clip:') === 0){
+      const c = displayClips[parseInt(v.slice(5), 10)];
+      if(c && c.type === 'image' && c.img){
+        coverSrcUrl = c.url;
+        coverSrc = { el: c.img, w: c.img.naturalWidth, h: c.img.naturalHeight };
+        coverUpdateState();
+        return;
+      }
+      if(c && c.type === 'video'){ coverLoadVideo(c); return; }
+    }
+    coverSrc = null; coverSrcUrl = null;
+    coverUpdateState();
+  }
+
+  function coverLoadVideo(c){
+    const token = ++coverLoadToken;
+    let started = false;
+    coverSrcUrl = c.url;
+    const onReady = function(){
+      if(started || token !== coverLoadToken) return;
+      started = true;
+      const d = coverVideo.duration || c.rawDuration || 1;
+      const t0 = Math.min(1, d / 3);
+      coverScrub.max = d;
+      coverScrub.value = t0;
+      coverScrubTime.textContent = fmtTime(t0);
+      coverScrubWrap.style.display = 'block';
+      coverVideo.currentTime = t0;
+    };
+    coverVideo.onloadedmetadata = onReady;
+    coverVideo.onloadeddata = onReady;
+    coverVideo.src = c.url;
+    coverVideo.load();
+  }
+
+  coverVideo.addEventListener('seeked', function(){
+    const vw = coverVideo.videoWidth, vh = coverVideo.videoHeight;
+    if(!vw || !vh) return;
+    const k = Math.min(1, 1920 / Math.max(vw, vh));
+    coverFrameCanvas.width = Math.round(vw * k);
+    coverFrameCanvas.height = Math.round(vh * k);
+    coverFrameCanvas.getContext('2d').drawImage(coverVideo, 0, 0, coverFrameCanvas.width, coverFrameCanvas.height);
+    coverSrc = { el: coverFrameCanvas, w: coverFrameCanvas.width, h: coverFrameCanvas.height };
+    coverUpdateState();
+  });
+
+  coverSourceSel.addEventListener('change', coverApplySource);
+  coverScrub.addEventListener('input', function(){
+    const t = parseFloat(coverScrub.value) || 0;
+    coverScrubTime.textContent = fmtTime(t);
+    coverVideo.currentTime = t;
+  });
+
+  coverImageInput.addEventListener('change', function(e){
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const img = new Image();
+    img.onload = function(){
+      coverManualImg = img;
+      coverManualName = f.name;
+      coverImageLabel.textContent = f.name;
+      coverRefreshSources();
+      coverSourceSel.value = 'manual';
+      coverApplySource();
+    };
+    img.onerror = function(){ coverStatus.className = 'status-line error'; coverStatus.textContent = 'Yeh image load nahi hui. Dusri file try karein.'; };
+    img.src = URL.createObjectURL(f);
+    coverImageInput.value = '';
+  });
+
+  // ----- text, size, colour -----
+  coverTextInput.addEventListener('input', coverUpdateState);
+  coverFromCaptionBtn.addEventListener('click', function(){
+    const words = getWords();
+    if(!words.length){ coverStatus.className = 'status-line'; coverStatus.textContent = 'Pehle upar caption paragraph likho.'; return; }
+    coverTextInput.value = words.slice(0, MAX_WORDS_PER_CHUNK).join(' ');
+    coverUpdateState();
+  });
+
+  function coverSetSize(v){
+    v = Math.max(28, Math.min(160, Math.round(v)));
+    coverFontSize = v;
+    coverSizeRange.value = v;
+    coverSizeVal.textContent = v;
+    coverRedraw();
+  }
+  coverSizeRange.addEventListener('input', function(){ coverSetSize(parseFloat(coverSizeRange.value)); });
+  coverSizeMinus.addEventListener('click', function(){ coverSetSize((coverFontSize || (coverLast ? coverLast.L.size : 72)) - 4); });
+  coverSizePlus.addEventListener('click', function(){ coverSetSize((coverFontSize || (coverLast ? coverLast.L.size : 72)) + 4); });
+
+  function coverMakeSwatches(container, colors, activeColor, customStart, onPick){
+    function choose(color, btn){
+      Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(b){
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      onPick(color);
+    }
+    colors.forEach(function(color){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.style.background = color;
+      b.setAttribute('aria-label', 'Colour ' + color);
+      b.setAttribute('aria-pressed', color === activeColor ? 'true' : 'false');
+      b.addEventListener('click', function(){ choose(color, b); });
+      container.appendChild(b);
+    });
+    const wrap = document.createElement('label');
+    wrap.className = 'swatch swatch-custom';
+    wrap.setAttribute('aria-label', 'Custom colour');
+    wrap.setAttribute('aria-pressed', 'false');
+    const inp = document.createElement('input');
+    inp.type = 'color';
+    inp.value = customStart;
+    inp.addEventListener('input', function(){ choose(inp.value, wrap); });
+    wrap.appendChild(inp);
+    container.appendChild(wrap);
+  }
+  coverMakeSwatches(coverSwatchesEl, COVER_SWATCHES, coverActiveColor, '#FFFFFF', function(c){ coverActiveColor = c; });
+  coverMakeSwatches(coverBgSwatchesEl, COVER_BG_SWATCHES, coverBgColor, '#7C3AED', function(c){ coverBgColor = c; coverRedraw(); });
+
+  coverBgChk.addEventListener('change', function(){
+    coverBgOpts.style.display = coverBgChk.checked ? 'block' : 'none';
+    coverRedraw();
+  });
+  coverBgOpacityRange.addEventListener('input', function(){
+    coverBgOpacity = (parseFloat(coverBgOpacityRange.value) || 100) / 100;
+    coverBgOpacityVal.textContent = Math.round(coverBgOpacity * 100) + '%';
+    coverRedraw();
+  });
+
+  // Left / Center: also snaps a dragged block to the left margin or the horizontal centre
+  function coverSetAlign(a){
+    coverAlign = a;
+    coverAlignLeftBtn.setAttribute('aria-pressed', a === 'left' ? 'true' : 'false');
+    coverAlignCenterBtn.setAttribute('aria-pressed', a === 'center' ? 'true' : 'false');
+    if(coverPosCustom && coverLast){
+      const left = (a === 'center') ? (CANVAS_W - coverLast.L.blockW) / 2 : LEFT_PAD;
+      coverLeftFrac = left / CANVAS_W;
+    }
+    coverRedraw();
+  }
+  coverAlignLeftBtn.addEventListener('click', function(){ coverSetAlign('left'); });
+  coverAlignCenterBtn.addEventListener('click', function(){ coverSetAlign('center'); });
+
+  coverOutlineChk.addEventListener('change', coverRedraw);
+  coverWatermarkChk.addEventListener('change', coverRedraw);
+
+  coverResetBtn.addEventListener('click', function(){
+    coverPosCustom = false;
+    coverFontSize = null;
+    coverWordColors = [];
+    coverRedraw();
+  });
+
+  // ----- drag text / tap word -----
+  function coverPoint(e){
+    const r = coverCanvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * CANVAS_W / r.width, y: (e.clientY - r.top) * CANVAS_H / r.height };
+  }
+
+  function coverWordAt(p){
+    if(!coverLast) return null;
+    const L = coverLast.L, pos = coverLast.pos;
+    let li = Math.floor((p.y - pos.top) / L.lh);
+    li = Math.max(0, Math.min(L.lines.length - 1, li));
+    let best = null, bestDist = Infinity;
+    L.lines[li].forEach(function(w){
+      const x0 = pos.left + L.lineOff[li] + w.x, x1 = x0 + w.width;
+      const d = p.x < x0 ? x0 - p.x : (p.x > x1 ? p.x - x1 : 0);
+      if(d < bestDist){ bestDist = d; best = w; }
+    });
+    return best;
+  }
+
+  coverCanvas.addEventListener('pointerdown', function(e){
+    if(!coverLast || coverDrag) return;
+    const p = coverPoint(e);
+    const L = coverLast.L, pos = coverLast.pos, m = 30;
+    if(p.x < pos.left - m || p.x > pos.left + L.blockW + m || p.y < pos.top - m || p.y > pos.top + L.blockH + m) return;
+    e.preventDefault();
+    try{ coverCanvas.setPointerCapture(e.pointerId); }catch(err){}
+    coverDrag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, offX: p.x - pos.left, offY: p.y - pos.top, moved: false, tap: p };
+  });
+
+  coverCanvas.addEventListener('pointermove', function(e){
+    if(!coverDrag || e.pointerId !== coverDrag.id) return;
+    if(!coverDrag.moved){
+      if(Math.hypot(e.clientX - coverDrag.sx, e.clientY - coverDrag.sy) < 6) return;
+      coverDrag.moved = true;
+      coverCanvas.classList.add('dragging');
+    }
+    e.preventDefault();
+    const p = coverPoint(e), L = coverLast.L;
+    const pad = coverPadX(L);
+    const left = Math.max(pad, Math.min(CANVAS_W - L.blockW - pad, p.x - coverDrag.offX));
+    const top = Math.max(0, Math.min(CANVAS_H - L.blockH, p.y - coverDrag.offY));
+    coverPosCustom = true;
+    coverLeftFrac = left / CANVAS_W;
+    coverTopFrac = top / CANVAS_H;
+    coverRedraw();
+  });
+
+  function coverEndPointer(e){
+    if(!coverDrag || e.pointerId !== coverDrag.id) return;
+    const d = coverDrag;
+    coverDrag = null;
+    coverCanvas.classList.remove('dragging');
+    if(!d.moved && e.type === 'pointerup'){
+      const w = coverWordAt(d.tap);
+      if(w){
+        const cur = (coverWordColors[w.index] || coverDefaultTextColor()).toLowerCase();
+        coverWordColors[w.index] = (cur === coverActiveColor.toLowerCase()) ? null : coverActiveColor;
+      }
+    }
+    coverRedraw();
+  }
+  coverCanvas.addEventListener('pointerup', coverEndPointer);
+  coverCanvas.addEventListener('pointercancel', coverEndPointer);
+
+  // ----- ratio follows the video ratio switch -----
+  function coverOnRatioChange(){
+    coverCanvas.width = CANVAS_W;
+    coverCanvas.height = CANVAS_H;
+    coverWrap.style.aspectRatio = CANVAS_W + ' / ' + CANVAS_H;
+    coverRatioTag.textContent = (CANVAS_H === 1280) ? '9:16' : '4:5';
+    coverRedraw();
+  }
+
+  // ----- download (PNG, 1080px wide, same ratio as the video) -----
+  async function coverSaveBlob(blob, filename){
+    const downloads = (window.claude && typeof window.claude.use === 'function') ? await window.claude.use('downloads') : null;
+    if(downloads){
+      try{ await downloads.save({ filename: filename, data: blob }); return; }
+      catch(err){ if(err && err.code === 'declined') return; }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
+  coverDownloadBtn.addEventListener('click', function(){
+    if(!coverSrc) return;
+    const outW = COVER_EXPORT_WIDTH;
+    const outH = Math.round(outW * CANVAS_H / CANVAS_W);
+    const off = document.createElement('canvas');
+    off.width = outW; off.height = outH;
+    const c = off.getContext('2d');
+    c.scale(outW / CANVAS_W, outH / CANVAS_H);
+    coverRender(c, CANVAS_W, CANVAS_H, { scale: outW / CANVAS_W });
+    coverDownloadBtn.disabled = true;
+    off.toBlob(function(blob){
+      coverDownloadBtn.disabled = false;
+      if(!blob){ coverStatus.className = 'status-line error'; coverStatus.textContent = 'Cover save nahi ho paya. Dobara try karein.'; return; }
+      const name = 'cover-' + (CANVAS_H === 1280 ? '9x16' : '4x5') + '.png';
+      coverSaveBlob(blob, name);
+      coverStatus.className = 'status-line ready';
+      coverStatus.textContent = 'Cover saved — ' + name;
+    }, 'image/png');
+  });
+
+  coverOnRatioChange();
+  coverUpdateState();
 
   drawStaticFrame();
 })();
