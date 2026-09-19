@@ -222,9 +222,26 @@
   const AUDIO_BITRATE = 192000;
   const WATERMARK_TEXT = 'Relationship Cues';
   const MAX_TOTAL_SECONDS = 59;
-  const LEFT_PAD = 40;
-  const RIGHT_PAD = 40;
   const HIGHLIGHT_COLOR = '#3EE8AE';
+
+  // ---------- Caption safe-zone (Instagram/Facebook Reels + YouTube Shorts UI-aware) ----------
+  // Reels/Shorts players draw fixed UI chrome on top of the video: a top status/header strip,
+  // a right-side action-icon column (like/comment/share/save/more), and a bottom strip that
+  // holds the caption text, audio/music info, "Follow" button and the progress bar. Any caption
+  // text drawn under that chrome gets clipped or unreadable once the file is actually posted.
+  // These fractions carve out that chrome so captions always land in the zone every platform
+  // leaves clear, instead of guessing a fixed pixel box on a fixed canvas size.
+  function getCaptionSafeZone(){
+    if(CANVAS_H === 1280){
+      // 9:16 — Reels / Shorts. Right icon column + bottom strip are the biggest offenders.
+      return { top:0.11, bottom:0.24, left:0.06, right:0.19 };
+    }
+    // 4:5 — normal feed post. No persistent overlay chrome, only light breathing room.
+    return { top:0.05, bottom:0.08, left:0.06, right:0.06 };
+  }
+  const CAPTION_MAX_BAND_FRAC = 0.34;  // caption block never grows past this share of the frame height
+  const CAPTION_BASE_FONT_FRAC = 0.10; // starting font size as a fraction of canvas width
+  const CAPTION_MIN_FONT = 30;
   const MAX_WORDS_PER_CHUNK = 9;
   const IMAGE_MIN_SEC = 5, IMAGE_MAX_SEC = 6;
   const IMAGE_REF_WEIGHT = (IMAGE_MIN_SEC + IMAGE_MAX_SEC) / 2; // reference "weight" used to split narration-driven duration evenly between images
@@ -1489,27 +1506,44 @@
 
   function computeLayout(){
     const words = getWords();
-    const boxTop = CANVAS_H - CANVAS_H/3;
-    const boxHeight = CANVAS_H/3;
-    const maxWidth = CANVAS_W - LEFT_PAD - RIGHT_PAD;
+    const safe = getCaptionSafeZone();
+    const leftPad = CANVAS_W * safe.left;
+    const rightPad = CANVAS_W * safe.right;
+    const topSafe = CANVAS_H * safe.top;
+    const bottomSafe = CANVAS_H * safe.bottom;
+    const maxWidth = CANVAS_W - leftPad - rightPad;
+    const centerX = leftPad + maxWidth/2;
+
+    // Caption block is anchored just above the bottom UI chrome and is capped so it can
+    // never grow up into the top chrome either — it shrink-wraps to whatever it actually needs.
+    const boxBottom = CANVAS_H - bottomSafe;
+    const maxBandHeight = Math.min(CANVAS_H * CAPTION_MAX_BAND_FRAC, boxBottom - topSafe);
+
     const plan = buildScreenPlan(words);
     const rawChunks = plan.screens.map(function(sc){
       const arr = [];
       for(let k = sc.first; k <= sc.last; k++) arr.push({ text: words[k], index: k });
       return arr;
     });
-    let fontSize = 80;
-    let chunkLines, lineHeight, maxLines;
 
-    while(fontSize >= 32){
+    let fontSize = Math.round(CANVAS_W * CAPTION_BASE_FONT_FRAC);
+    let chunkLines, lineHeight, maxLines;
+    const vPad = fontSize => fontSize * 0.9; // breathing room reserved inside the band for backdrop padding
+
+    while(fontSize >= CAPTION_MIN_FONT){
       ctx.font = '700 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       lineHeight = fontSize * 1.35;
       chunkLines = rawChunks.map(c => buildWordLayout(ctx, c, maxWidth));
       maxLines = chunkLines.reduce((m, lines) => Math.max(m, lines.length), 0);
-      if(maxLines * lineHeight <= boxHeight - 44) break;
+      if(maxLines * lineHeight <= maxBandHeight - vPad(fontSize)) break;
       fontSize -= 4;
     }
-    return { fontSize, lineHeight, boxTop, boxHeight, chunks: chunkLines, wordCount: words.length, plan: plan };
+    if(fontSize < CAPTION_MIN_FONT) fontSize = CAPTION_MIN_FONT;
+
+    const boxHeight = Math.min(maxBandHeight, maxLines * lineHeight + vPad(fontSize));
+    const boxTop = boxBottom - boxHeight;
+
+    return { fontSize, lineHeight, boxTop, boxHeight, chunks: chunkLines, wordCount: words.length, plan: plan, centerX: centerX };
   }
 
   function getLayout(){
@@ -1519,34 +1553,54 @@
 
   // ---------- Drawing ----------
   function drawCaptionBox(activeWordIndex){
-    const { fontSize, lineHeight, boxTop, boxHeight, chunks, wordCount, plan } = getLayout();
+    const { fontSize, lineHeight, boxTop, boxHeight, chunks, wordCount, plan, centerX } = getLayout();
     if(!wordCount) return;
     const chunkIndex = plan.screenOfWord[Math.max(0, Math.min(wordCount - 1, activeWordIndex))];
     const lines = chunks[chunkIndex];
     if(!lines || !lines.length) return;
 
-    const grad = ctx.createLinearGradient(0, boxTop, 0, CANVAS_H);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(0.18, 'rgba(0,0,0,0.85)');
-    grad.addColorStop(0.4, 'rgba(0,0,0,0.98)');
-    grad.addColorStop(1, 'rgba(0,0,0,1)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, boxTop, CANVAS_W, boxHeight);
-
-    const totalHeight = lines.length * lineHeight;
-    let y = boxTop + (boxHeight - totalHeight)/2 + lineHeight*0.78;
-
     ctx.font = '700 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
 
-    lines.forEach(lineWords => {
+    // Each line is centered independently inside the safe width, rather than pinned to the
+    // left edge — this keeps text away from the right-side icon column on Reels/Shorts and
+    // reads more naturally as a caption card regardless of how many words are on the line.
+    const lineWidths = lines.map(lineWords => {
+      const last = lineWords[lineWords.length - 1];
+      return last.x + last.width;
+    });
+
+    const totalHeight = lines.length * lineHeight;
+    let y = boxTop + (boxHeight - totalHeight)/2 + lineHeight*0.78;
+
+    // Shrink-wrapped rounded backdrop behind just the text block, so it stays legible over any
+    // footage without painting a large dark bar across the whole safe zone.
+    const blockWidth = Math.max.apply(null, lineWidths);
+    const padX = fontSize * 0.4, padY = fontSize * 0.32;
+    const bx = centerX - blockWidth/2 - padX;
+    const by = boxTop + (boxHeight - totalHeight)/2 - padY;
+    const bw = blockWidth + padX*2;
+    const bh = totalHeight + padY*2;
+    const radius = Math.min(18, bh/2);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(bx + radius, by);
+    ctx.arcTo(bx + bw, by, bx + bw, by + bh, radius);
+    ctx.arcTo(bx + bw, by + bh, bx, by + bh, radius);
+    ctx.arcTo(bx, by + bh, bx, by, radius);
+    ctx.arcTo(bx, by, bx + bw, by, radius);
+    ctx.closePath();
+    ctx.fill();
+
+    lines.forEach((lineWords, li) => {
+      const startX = centerX - lineWidths[li]/2;
       lineWords.forEach(w => {
-        const px = LEFT_PAD + w.x;
+        const px = startX + w.x;
         if(w.index === activeWordIndex){
-          const padX = 6, padTop = fontSize*0.78, padBottom = fontSize*0.22;
+          const hPadX = 6, padTop = fontSize*0.78, padBottom = fontSize*0.22;
           ctx.fillStyle = HIGHLIGHT_COLOR;
-          ctx.fillRect(px - padX, y - padTop, w.width + padX*2, padTop + padBottom);
+          ctx.fillRect(px - hPadX, y - padTop, w.width + hPadX*2, padTop + padBottom);
           ctx.fillStyle = '#0A0A0A';
         } else {
           ctx.fillStyle = '#FFFFFF';
