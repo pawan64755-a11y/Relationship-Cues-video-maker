@@ -81,6 +81,9 @@
 
   textarea{width:100%;background:#14151C;border:1px solid var(--panel-border);border-radius:6px;color:var(--text);padding:8px 9px;font-family:var(--sans);font-size:12.5px;line-height:1.4;resize:vertical;min-height:64px;}
   textarea:focus{border-color:var(--highlight);}
+  .opt-row{display:flex;align-items:flex-start;gap:8px;margin:7px 0 0;font-size:11.5px;color:var(--muted);line-height:1.4;cursor:pointer;}
+  .opt-row input{accent-color:var(--highlight);margin:2px 0 0;flex:none;cursor:pointer;}
+  .opt-row strong{color:var(--text);font-weight:600;}
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#1A1300;border:none;padding:9px 14px;border-radius:7px;font-size:13px;font-weight:650;cursor:pointer;width:100%;min-height:40px;}
   .btn:hover:not(:disabled){filter:brightness(1.06);}
@@ -96,41 +99,11 @@
   .download-box .size{display:block;margin-top:2px;font-family:var(--mono);font-size:10px;color:var(--muted);}
 
 
-  /* ---- Cover maker ---- */
-  .cover-tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--panel-border);border-radius:5px;padding:1px 6px;}
+  /* ---- Shared form helpers ---- */
   .field-label{display:block;margin:9px 0 4px;color:var(--muted);font-size:10.5px;}
   .field-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:9px;}
   .field-row .field-label{margin:0;}
-  select.sel{width:100%;background:#14151C;border:1px solid var(--panel-border);border-radius:6px;color:var(--text);padding:8px 9px;font-size:12px;font-family:var(--sans);}
-  select.sel:focus{border-color:var(--highlight);}
   input[type=range]{width:100%;accent-color:var(--highlight);margin:4px 0;}
-  .mini-btn{background:#14151C;border:1px solid var(--panel-border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:11.5px;cursor:pointer;min-height:30px;}
-  .mini-btn:hover:not(:disabled){border-color:var(--highlight);}
-  .mini-btn:disabled{opacity:0.35;cursor:not-allowed;}
-  .cover-wrap{background:#000;border:1px solid var(--panel-border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:4/5;width:100%;max-width:300px;margin:10px auto 0;}
-  canvas#coverCanvas{width:100%;height:100%;display:block;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;}
-  canvas#coverCanvas.dragging{cursor:grabbing;}
-  .cover-hint{margin:6px 0 0;text-align:center;color:var(--muted);font-size:10.5px;}
-  .size-row{display:flex;align-items:center;gap:8px;}
-  .size-row input[type=range]{flex:1;}
-  .size-row .mini-btn{width:34px;padding:5px 0;font-size:15px;line-height:1;}
-  .size-val{font-family:var(--mono);font-size:11px;color:var(--text);min-width:26px;text-align:right;}
-  .swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--panel-border);padding:0;cursor:pointer;}
-  .swatch[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 2px var(--highlight);}
-  .swatch-custom{position:relative;overflow:hidden;background:conic-gradient(#E5595C,#F2B705,#3EE8AE,#4DB8FF,#FF6FB1,#E5595C);}
-  .swatch-custom input{position:absolute;inset:-6px;width:44px;height:44px;opacity:0;cursor:pointer;}
-  .seg{display:flex;border:1px solid var(--panel-border);border-radius:6px;overflow:hidden;}
-  .seg button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:6px;background:#14151C;border:none;color:var(--muted);font-size:12px;cursor:pointer;}
-  .seg button+button{border-left:1px solid var(--panel-border);}
-  .seg button[aria-pressed="true"]{background:#242736;color:var(--text);box-shadow:inset 0 -2px 0 var(--highlight);}
-  .bg-opts{margin-top:2px;padding:0 0 2px;}
-  .toggle-row{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;}
-  .toggle-row label{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text);cursor:pointer;}
-  .toggle-row input{accent-color:var(--highlight);margin:0;width:16px;height:16px;}
-  .cover-actions{display:flex;gap:8px;margin-top:12px;}
-  .cover-actions .btn{flex:1;}
-  .cover-actions .mini-btn{flex:none;min-height:40px;padding:0 14px;}
 
   footer.foot{max-width:1180px;margin:0 auto;padding:5px 14px 14px;color:var(--muted);font-size:10px;line-height:1.45;}
   @media (max-width:860px){ footer.foot{padding-bottom:90px;} }
@@ -155,7 +128,7 @@
 <header class="top">
   <div class="mark">CAPTION DECK</div>
   <h1>4:5 Reel Maker — word-highlight captions</h1>
-  <p>Video/image jodo, caption add karo (type ya audio se auto), cover banao, export karo.</p>
+  <p>Video/image jodo, caption add karo (type ya audio se auto), export karo.</p>
 </header>
 
 <div class="app">
@@ -199,97 +172,25 @@
       <div class="card-head"><span class="step">02</span><h2>Caption — type karein ya audio se auto</h2></div>
       <details>
         <summary>Kaise kaam karta hai</summary>
-        <p>Text khud likho, ya English audio (voiceover) attach karo — transcript + har word ka exact timing auto-generate hoga. Audio attach karne par woh export ki soundtrack ban jaati hai, aur attached video/images us audio ki poori length ke hisaab se automatically adjust ho jaate hain — audio aur video/caption ekdum saath shuru aur saath khatam hote hain, koi extra silent pad nahi.</p>
+        <p>Text khud likho, ya English audio (voiceover) attach karo. <strong>Exact word sync</strong> on ho to caption ka har word voiceover ke saath forced-align hota hai (audio ka har word apni real start/end timing ke saath) — highlight ussi word par jaata hai jo us waqt bola ja raha hai. Text edit karoge to wahi audio se turant dobara align ho jaata hai. Audio attach karne par woh export ki soundtrack ban jaati hai, aur attached video/images us audio ki poori length ke hisaab se adjust ho jaate hain — audio aur video/caption ekdum saath shuru aur saath khatam hote hain.</p>
       </details>
       <label class="file-drop" for="audioInput">
         <span id="audioDropLabel">Audio track (optional, auto-transcribe)</span>
         <input type="file" id="audioInput" accept="audio/*">
       </label>
+      <label class="opt-row"><input type="checkbox" id="exactSyncToggle" checked><span><strong>Exact word sync</strong> — har word audio se word-to-word align (extra ~95MB model, sirf pehli baar)</span></label>
+      <label class="opt-row"><input type="checkbox" id="useScriptToggle"><span>Meri likhi script use karo — caption box ka text hi transcript hai, Whisper skip (audio attach karne se pehle text paste karein)</span></label>
       <div class="status-line" id="transcribeStatus" style="display:none;"></div>
       <div class="field-row" id="syncRow" style="display:none;align-items:center;">
         <span class="field-label" style="margin:0;">Highlight sync <span id="syncVal" style="color:var(--text);font-family:var(--mono);">0ms</span></span>
       </div>
       <input type="range" id="syncOffset" min="-600" max="600" step="10" value="0" style="display:none;">
-      <div class="hint" id="syncHint" style="display:none;margin:2px 0 0;">Agar highlight voiceover se aage/peeche chal raha hai, is slider se milaiye — right = highlight thoda der se (delay), left = jaldi (early).</div>
+      <div class="hint" id="syncHint" style="display:none;margin:2px 0 0;">Exact sync mein 0ms hi sahi hota hai. Phir bhi agar aapke device par highlight aage/peeche lage to slider se milaiye — right = thoda der se (delay), left = jaldi (early).</div>
       <textarea id="paragraphInput" placeholder="Caption paragraph yahan likho..." style="margin-top:10px;"></textarea>
     </div>
 
-    <div class="card" id="coverCard">
-      <div class="card-head"><span class="step">03</span><h2>Cover banayein</h2><span class="cover-tag" id="coverRatioTag">4:5</span></div>
-      <details>
-        <summary>Kaise kaam karta hai</summary>
-        <p>Cover us ratio mein banta hai jo upar 4:5 / 9:16 switch mein chuna hai. Background video ka koi bhi frame ho sakta hai, ya apni image. Text wahi bold font mein aata hai jo video caption mein hai, aur dark outline ke saath taaki image par saaf dikhe. Text ko Left ya Center align karo, drag karke kahin bhi rakho, size slider se badlo, chaho to text ke piche apni pasand ke colour ka background lagao, aur colour chun kar kisi word par tap karo (usi colour par dobara tap = wapas white). Cover PNG mein download hota hai — video mein judta nahi.</p>
-      </details>
-
-      <label class="field-label" for="coverSource">Background</label>
-      <select class="sel" id="coverSource" disabled><option>Pehle media ya image chuno</option></select>
-
-      <div id="coverScrubWrap" style="display:none;">
-        <label class="field-label" for="coverScrub">Video frame — <span id="coverScrubTime">0:00</span></label>
-        <input type="range" id="coverScrub" min="0" max="1" step="0.05" value="0">
-      </div>
-
-      <label class="file-drop" for="coverImageInput" style="display:block;margin-top:9px;">
-        <span id="coverImageLabel">Ya apni image upload karein</span>
-        <input type="file" id="coverImageInput" accept="image/*">
-      </label>
-
-      <div class="field-row">
-        <label class="field-label" for="coverText">Cover text</label>
-        <button class="mini-btn" type="button" id="coverFromCaption">Caption se lo</button>
-      </div>
-      <textarea id="coverText" placeholder="Cover par jo likhna hai wo yahan likho... (Enter se nayi line)" style="margin-top:4px;min-height:56px;"></textarea>
-
-      <div class="cover-wrap" id="coverWrap">
-        <canvas id="coverCanvas" width="720" height="900"></canvas>
-        <div class="frame-empty" id="coverEmpty" style="background:#000;">
-          <div class="icon">▭</div>
-          <div>Media ya image chuno,<br>cover yahan dikhega</div>
-        </div>
-      </div>
-      <p class="cover-hint">Text ko drag karo · colour chun kar word par tap karo</p>
-
-      <span class="field-label">Text size</span>
-      <div class="size-row">
-        <button class="mini-btn" type="button" id="coverSizeMinus" aria-label="Text chhota karein">−</button>
-        <input type="range" id="coverSize" min="28" max="160" step="2" value="72" aria-label="Text size">
-        <button class="mini-btn" type="button" id="coverSizePlus" aria-label="Text bada karein">+</button>
-        <span class="size-val" id="coverSizeVal">72</span>
-      </div>
-
-      <span class="field-label">Alignment</span>
-      <div class="seg" role="group" aria-label="Text alignment">
-        <button type="button" id="coverAlignLeft" aria-pressed="true"><svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 1.5h12M1 6h8M1 10.5h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>Left</button>
-        <button type="button" id="coverAlignCenter" aria-pressed="false"><svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 1.5h12M3 6h8M2 10.5h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>Center</button>
-      </div>
-
-      <span class="field-label">Word colour</span>
-      <div class="swatches" id="coverSwatches"></div>
-
-      <div class="toggle-row" style="margin-top:12px;">
-        <label><input type="checkbox" id="coverBgOn"> Text ke piche background</label>
-      </div>
-      <div class="bg-opts" id="coverBgOpts" style="display:none;">
-        <span class="field-label">Background colour</span>
-        <div class="swatches" id="coverBgSwatches"></div>
-        <label class="field-label" for="coverBgOpacity">Opacity — <span id="coverBgOpacityVal">100%</span></label>
-        <input type="range" id="coverBgOpacity" min="20" max="100" step="5" value="100">
-      </div>
-
-      <div class="toggle-row">
-        <label><input type="checkbox" id="coverOutline" checked> Text outline</label>
-        <label><input type="checkbox" id="coverWatermark" checked> Watermark</label>
-      </div>
-
-      <div class="cover-actions">
-        <button class="btn" id="coverDownloadBtn" type="button" disabled>⬇ Cover Download (PNG)</button>
-        <button class="mini-btn" id="coverReset" type="button">Reset</button>
-      </div>
-      <div class="status-line" id="coverStatus">Cover ke liye media ya image chahiye.</div>
-    </div>
-
     <div class="card" id="exportCard">
-      <div class="card-head"><span class="step">04</span><h2>Export</h2></div>
+      <div class="card-head"><span class="step">03</span><h2>Export</h2></div>
       <button class="btn" id="btnExport" disabled>Video Export Karein</button>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       <div class="status-line" id="statusLine">Media aur text dono chahiye export ke liye.</div>
@@ -307,12 +208,12 @@
 </div>
 
 <footer class="foot">
-  Sab browser mein hi process hota hai, koi upload nahi. Export webm/mp4 mein hota hai, minimum 1080p (4:5 = 1080×1350, 9:16 = 1080×1920) aur 12 Mbps bitrate par. <strong>Auto-transcribe</strong> ek baar Whisper model internet se load karta hai (~40-70MB) — Claude ke artifact preview mein sandbox ki wajah se kaam nahi karega, isliye yeh file khud host/open karke test karein.
+  Sab browser mein hi process hota hai, koi upload nahi. Export webm/mp4 mein hota hai, minimum 1080p (4:5 = 1080×1350, 9:16 = 1080×1920) aur 12 Mbps bitrate par. <strong>Auto-transcribe</strong> ek baar Whisper model (~40-70MB) aur <strong>Exact word sync</strong> ek baar alignment model (~95MB) internet se load karta hai — Claude ke artifact preview mein sandbox ki wajah se kaam nahi karega, isliye yeh file khud host/open karke test karein.
 </footer>
 
 <script>
 (function(){
-  let CANVAS_W = 720, CANVAS_H = 900;   // logical layout units (all layout/caption/cover maths stay in these)
+  let CANVAS_W = 720, CANVAS_H = 900;   // logical layout units (all layout/caption maths stay in these)
   // Output quality: pixels are rendered and recorded at 1080 wide (4:5 -> 1080x1350, 9:16 -> 1080x1920),
   // i.e. minimum 1080p. Drawing code keeps using the 720-wide logical units; ctx is scaled by RENDER_SCALE.
   const EXPORT_WIDTH = 1080;
@@ -382,6 +283,8 @@
   const syncOffsetEl = document.getElementById('syncOffset');
   const syncValEl = document.getElementById('syncVal');
   const syncHintEl = document.getElementById('syncHint');
+  const exactSyncToggle = document.getElementById('exactSyncToggle');
+  const useScriptToggle = document.getElementById('useScriptToggle');
   let syncOffsetMs = Number(syncOffsetEl.value) || 0; // +ve = highlight thoda der se (delay), -ve = jaldi (early)
   const btnPlay = document.getElementById('btnPlay');
   const btnExport = document.getElementById('btnExport');
@@ -443,6 +346,10 @@
   let effectiveMaxSeconds = MAX_TOTAL_SECONDS;
   let rawClipsCache = null;
   let whisperPipelinePromise = null;
+  let transformersPromise = null;  // @xenova/transformers module, shared by Whisper and the forced-alignment model
+  let ctcModelPromise = null, ctcVocabCache = null;
+  let ctcEmissions = null;         // cached wav2vec2 log-probs of the narration: {data,F,V,vocab,blank,delim} -> exact word timing for ANY caption text
+  let alignVersion = 0, wordTimesCache = null;
 
   let clips = [];          // {type:'video'|'image'|'freeze', file, url, name, rawDuration, usedDuration, trimmed, img, comboIdx, playbackRate}
                             // 'freeze' clips are synthetic — they hold a still frame (from the first/last real clip) while the
@@ -452,8 +359,7 @@
   let globalElapsedBase = 0;
   let hasClips = false;
   let layoutCache = null;
-  let voice = null;            // auto voice analysis of the narration: {frames, prefix, onsets, n, offset, firstTime, lastTime} — null if speech/silence contrast is unclear
-  let transcribeReadyMsg = '';
+  let voice = null;            // energy/speech analysis of the narration: {frames, db, n, offset, firstTime, lastTime} — null if speech/silence contrast is unclear (used to snap word edges)
   let rafId = null;
 
   let audioCtx = null, audioDestination = null, audioGraphReady = false;
@@ -580,7 +486,6 @@
 
     dropLabel.textContent = displayClips.length + ' clip(s) attached';
     renderClipList(rawClips.length);
-    coverRefreshSources();
 
     if(hasClips){
       frameEmpty.style.display = 'none';
@@ -757,24 +662,13 @@
   }
 
   // ---------- Caption text ----------
+  // Editing the text re-aligns it to the voiceover right away (cached audio emissions + a fast Viterbi pass),
+  // so the highlight always follows the words that are actually on screen.
   paragraphInput.addEventListener('input', function(){
-    layoutCache = null;
-    const mismatch = !!(wordTimestamps && wordTimestamps.length !== getWords().length);
-    if(voice && narrationAudio.src){
-      // Text edited: the per-word Whisper times no longer line up, but the voice analysis is still
-      // valid — screens are re-planned automatically from the real speech/pause layout.
-      transcribeStatus.className = 'status-line ready';
-      transcribeStatus.textContent = mismatch
-        ? 'Text edit hua \u2014 voice ke pauses ke hisaab se screens auto re-sync ho gayi.'
-        : transcribeReadyMsg;
-    } else if(mismatch){
-      wordTimestamps = null;
-      syncRow.style.display = 'none';
-      syncOffsetEl.style.display = 'none';
-      syncHintEl.style.display = 'none';
-    }
+    invalidateWordTimes();
     updateExportReady();
     drawStaticFrame();
+    refreshSyncStatus(true);
   });
 
   syncOffsetEl.addEventListener('input', function(){
@@ -789,15 +683,20 @@
     syncValEl.textContent = (ms > 0 ? '+' : '') + ms + 'ms';
   }
 
-  // ---------- Auto sync engine: voice analysis (VAD) + pause-aware screens ----------
-  // Screen = unit. Each on-screen chunk is timed from the real speech in the audio: its start is
-  // snapped to the nearest real speech onset (after a pause), and the highlight inside a screen
-  // moves by word length over the *voiced* time only — so no per-word Whisper jitter, no drift.
-  const VOICE_HOP = 0.01;      // 10ms analysis frames
-  const SCREEN_LEAD = 0.08;    // caption appears a hair before the voice, easier to read
-  const SNAP_WINDOW = 0.30;    // max distance (s) a screen start may move to reach a real onset
+  // ---------- Exact word sync engine ----------
+  // Every caption word gets its OWN start/end time, taken from the audio itself:
+  //   1) CTC forced alignment (wav2vec2) of the caption text against the voiceover. The audio goes through the
+  //      model once (emissions are cached); aligning is then a cheap Viterbi pass, so editing the text re-syncs
+  //      instantly, word for word. Word edges are then snapped to the real silence / energy dip in the audio.
+  //   2) Fallback (model unavailable): Whisper word timestamps mapped onto the caption words by text alignment.
+  // The highlight is simply "the last word whose start <= playback time" - no length-proportional guessing,
+  // no onset snapping, no per-screen approximations.
+  const VOICE_HOP = 0.01;       // 10ms energy frames
+  const CTC_HOP = 0.02;         // wav2vec2 output frame = 20ms
+  const HIGHLIGHT_LEAD = 0.03;  // highlight lands ~30ms before the audible onset so it is never seen late
   const MIN_SCREEN_WORDS = 4;
 
+  // ----- voice analysis: energy envelope + speech/silence mask (used to snap word edges) -----
   function fillRuns(a, val, maxLen, to){
     const n = a.length;
     let i = 0;
@@ -829,75 +728,362 @@
     for(let f = 0; f < n; f++) frames[f] = db[f] > thr ? 1 : 0;
     fillRuns(frames, 0, 6, 1);                        // dips < 60ms inside speech = consonants, not pauses
     fillRuns(frames, 1, 4, 0);                        // blips < 40ms = clicks/noise
-    const prefix = new Int32Array(n + 1);
-    const onsets = [];
     let first = -1, last = -1;
     for(let f = 0; f < n; f++){
-      prefix[f + 1] = prefix[f] + frames[f];
-      if(frames[f]){
-        if(first < 0) first = f;
-        last = f;
-        if(f === 0 || !frames[f - 1]) onsets.push(f * VOICE_HOP + offset);
-      }
+      if(frames[f]){ if(first < 0) first = f; last = f; }
     }
     if(first < 0) return null;
-    return { frames: frames, prefix: prefix, onsets: onsets, n: n, offset: offset,
+    return { frames: frames, db: db, n: n, offset: offset,
              firstTime: first * VOICE_HOP + offset, lastTime: (last + 1) * VOICE_HOP + offset };
   }
 
-  function voiceSilenceIn(a, b){
-    if(!voice) return 0;
-    const f0 = Math.max(0, Math.floor((a - voice.offset) / VOICE_HOP));
-    const f1 = Math.min(voice.n, Math.ceil((b - voice.offset) / VOICE_HOP));
-    if(f1 <= f0) return 0;
-    return ((f1 - f0) - (voice.prefix[f1] - voice.prefix[f0])) * VOICE_HOP;
-  }
+  // ----- text -> spoken form (what the CTC model has to "hear") -----
+  const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve',
+    'thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+  const TENS = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  const ORD_IRREG = { one:'first', two:'second', three:'third', five:'fifth', eight:'eighth', nine:'ninth', twelve:'twelfth' };
 
-  function voicedAt(t){                               // seconds of actual speech before time t
-    const x = Math.max(0, Math.min(voice.n, (t - voice.offset) / VOICE_HOP));
-    const i = Math.floor(x);
-    return (voice.prefix[i] + (i < voice.n ? (x - i) * voice.frames[i] : 0)) * VOICE_HOP;
-  }
-
-  function timeAtVoiced(v, isStart){                  // inverse of voicedAt
-    const target = v / VOICE_HOP;
-    let lo = 0, hi = voice.n;
-    while(lo < hi){
-      const mid = (lo + hi) >> 1;
-      const val = isStart ? voice.prefix[mid + 1] > target : voice.prefix[mid] >= target;
-      if(val) hi = mid; else lo = mid + 1;
+  function numToWords(n){
+    if(n < 20) return ONES[n];
+    if(n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ' ' + ONES[n % 10] : '');
+    if(n < 1000) return ONES[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' ' + numToWords(n % 100) : '');
+    const units = [[1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million'], [1e3, 'thousand']];
+    for(let u = 0; u < units.length; u++){
+      const v = units[u][0];
+      if(n >= v) return numToWords(Math.floor(n / v)) + ' ' + units[u][1] + (n % v ? ' ' + numToWords(n % v) : '');
     }
-    return lo * VOICE_HOP + voice.offset;
+    return String(n);
+  }
+
+  function ordinalWords(n){
+    if(n >= 1e12) return String(n);
+    const parts = numToWords(n).split(' ');
+    const last = parts.pop();
+    parts.push(ORD_IRREG[last] || (/y$/.test(last) ? last.slice(0, -1) + 'ieth' : last + 'th'));
+    return parts.join(' ');
+  }
+
+  // 4-digit numbers that look like years are read the way people say them (1984 = nineteen eighty four)
+  function numberSpoken(raw){
+    const clean = raw.replace(/,/g, '');
+    if(!clean) return '';
+    if(clean.length > 12) return clean.split('').map(function(d){ return ONES[+d]; }).join(' ');
+    const n = parseInt(clean, 10);
+    if(clean.length === 4 && raw.indexOf(',') === -1 && ((n >= 1100 && n <= 1999) || (n >= 2010 && n <= 2099))){
+      const hi = Math.floor(n / 100), lo = n % 100;
+      return numToWords(hi) + (lo === 0 ? ' hundred' : (lo < 10 ? ' oh ' + ONES[lo] : ' ' + numToWords(lo)));
+    }
+    return numToWords(n);
+  }
+
+  function spokenForm(word){
+    let w = String(word).normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    w = w.replace(/[\u2018\u2019\u02bc`\u00b4]/g, "'");
+    w = w.replace(/\$\s*(\d(?:[\d,]*\d)?(?:\.\d+)?)/g, '$1 dollars ')
+         .replace(/%/g, ' percent ').replace(/&/g, ' and ').replace(/\+/g, ' plus ').replace(/@/g, ' at ');
+    w = w.replace(/(\d+)(?:st|nd|rd|th)\b/gi, function(_, d){ return ' ' + ordinalWords(parseInt(d, 10)) + ' '; });
+    w = w.replace(/(\d(?:[\d,]*\d)?)(?:\.(\d+))?/g, function(_, whole, frac){
+      let s = ' ' + numberSpoken(whole);
+      if(frac) s += ' point ' + frac.split('').map(function(d){ return ONES[+d]; }).join(' ');
+      return s + ' ';
+    });
+    // LibriSpeech-style: letters + apostrophe only, every other symbol (hyphen, slash, dot...) is a word break
+    w = w.toUpperCase().replace(/[^A-Z' ]+/g, ' ');
+    return w.split(/\s+/).map(function(p){ return p.replace(/^'+|'+$/g, ''); }).filter(Boolean).join(' ');
+  }
+
+  function wordToTokenIds(word, vocab, delim){
+    const sp = spokenForm(word);
+    if(!sp) return [];
+    const ids = [];
+    sp.split(' ').forEach(function(part, pi){
+      if(pi > 0) ids.push(delim);
+      for(let k = 0; k < part.length; k++){
+        const id = vocab[part[k]];
+        if(id !== undefined) ids.push(id);
+      }
+    });
+    return ids;
+  }
+
+  // ----- CTC forced alignment (Viterbi over the blank-extended label sequence) -----
+  // em = { data: Float32Array log-probs [F*V], F, V, blank }, tokens = label ids (no blanks).
+  // Returns the first/last frame of every token, plus how many tokens the audio actually "agrees" with.
+  function ctcViterbi(em, tokens){
+    const F = em.F, V = em.V, d = em.data, L = tokens.length, S = 2 * L + 1, blank = em.blank, delim = em.delim;
+    if(!L || F < L) return null;
+    const NEG = -1e30;
+    const lab = new Int32Array(S);
+    for(let s = 0; s < S; s++) lab[s] = (s & 1) ? tokens[(s - 1) >> 1] : blank;
+    const skip = new Uint8Array(S);
+    for(let s = 3; s < S; s += 2) skip[s] = lab[s] !== lab[s - 2] ? 1 : 0;
+
+    let prev = new Float32Array(S).fill(NEG), cur = new Float32Array(S);
+    const bp = new Uint8Array(F * S);
+    prev[0] = d[blank];
+    if(S > 1) prev[1] = d[lab[1]];
+    for(let t = 1; t < F; t++){
+      const row = t * V, base = t * S;
+      for(let s = 0; s < S; s++){
+        let best = prev[s], b = 0;
+        if(s >= 1 && prev[s - 1] > best){ best = prev[s - 1]; b = 1; }
+        if(skip[s] && prev[s - 2] > best){ best = prev[s - 2]; b = 2; }
+        cur[s] = best + d[row + lab[s]];
+        bp[base + s] = b;
+      }
+      const tmp = prev; prev = cur; cur = tmp;
+    }
+    let s = (S >= 2 && prev[S - 2] > prev[S - 1]) ? S - 2 : S - 1;
+    if(prev[s] < NEG / 2) return null;
+    const st = new Int32Array(F);
+    for(let t = F - 1; t >= 0; t--){
+      st[t] = s;
+      if(t > 0) s -= bp[t * S + s];
+    }
+    const first = new Int32Array(L).fill(-1), last = new Int32Array(L).fill(-1);
+    for(let t = 0; t < F; t++){
+      const q = st[t];
+      if(q & 1){ const j = (q - 1) >> 1; if(first[j] < 0) first[j] = t; last[j] = t; }
+    }
+    let good = 0, cnt = 0;
+    for(let j = 0; j < L; j++){
+      if(tokens[j] === delim || first[j] < 0) continue;
+      let p = 0;
+      for(let t = first[j]; t <= last[j]; t++){ const v = Math.exp(d[t * V + tokens[j]]); if(v > p) p = v; }
+      cnt++;
+      if(p >= 0.25) good++;
+    }
+    return { first: first, last: last, conf: cnt ? good / cnt : 0 };
+  }
+
+  // ----- snap CTC word spikes to real word edges using the audio energy -----
+  function voiceFrameIdx(t){ return Math.max(0, Math.min(voice.n - 1, Math.round((t - voice.offset) / VOICE_HOP))); }
+
+  function walkBack(t, maxBack){           // start of the speech burst that contains time t
+    if(!voice) return Math.max(0, t - 0.06);
+    let f = voiceFrameIdx(t);
+    if(!voice.frames[f]){                  // spike can sit in a tiny dip: look a few frames back for speech
+      let k = f;
+      for(let i = 0; i < 6 && k > 0 && !voice.frames[k]; i++) k--;
+      if(voice.frames[k]) f = k;
+    }
+    const limit = Math.max(0, f - Math.round(maxBack / VOICE_HOP));
+    while(f > limit && voice.frames[f - 1]) f--;
+    return Math.max(0, f * VOICE_HOP + voice.offset);
+  }
+
+  function walkFwd(t, maxFwd){             // end of the speech burst that contains time t
+    if(!voice) return t + 0.08;
+    let f = voiceFrameIdx(t);
+    const limit = Math.min(voice.n - 1, f + Math.round(maxFwd / VOICE_HOP));
+    while(f < limit && voice.frames[f + 1]) f++;
+    return (f + 1) * VOICE_HOP + voice.offset;
+  }
+
+  // Boundary between two neighbouring words: a, b = end of previous word's last sound / start of next word's first sound.
+  // Real pause in between -> previous word ends where the pause starts, next word starts where it ends.
+  // Continuous speech -> both meet at the deepest energy dip.
+  function gapBoundary(a, b){
+    if(!(b > a)){ return [a, a]; }
+    if(!voice){                            // no usable energy info: long gap = pause, keep the next word close to its first sound
+      if(b - a > 0.14){ const pe = a + 0.08; return [pe, Math.max(pe, b - 0.05)]; }
+      const m = (a + b) / 2; return [m, m];
+    }
+    const f0 = voiceFrameIdx(a), f1 = Math.max(f0, voiceFrameIdx(b));
+    let bestLen = 0, bestS = -1, runS = -1;
+    for(let f = f0; f <= f1; f++){
+      if(!voice.frames[f]){ if(runS < 0) runS = f; }
+      if(runS >= 0 && (voice.frames[f] || f === f1)){
+        const end = voice.frames[f] ? f : f + 1;
+        if(end - runS > bestLen){ bestLen = end - runS; bestS = runS; }
+        runS = -1;
+      }
+    }
+    if(bestLen >= 3){                      // >= 30ms of real silence between the words
+      return [Math.max(a, bestS * VOICE_HOP + voice.offset), Math.min(b, (bestS + bestLen) * VOICE_HOP + voice.offset)];
+    }
+    let mi = f0, mv = 1e9;
+    for(let f = f0; f <= f1; f++){
+      const v = (voice.db[Math.max(0, f - 1)] + voice.db[f] + voice.db[Math.min(voice.n - 1, f + 1)]) / 3;
+      if(v < mv){ mv = v; mi = f; }
+    }
+    const t = Math.max(a, Math.min(b, (mi + 0.5) * VOICE_HOP + voice.offset));
+    return [t, t];
+  }
+
+  function refineBounds(sp){
+    const m = sp.length, starts = new Array(m), ends = new Array(m), out = new Array(m);
+    starts[0] = walkBack(sp[0].s, 0.25);
+    ends[m - 1] = walkFwd(sp[m - 1].e, 0.4);
+    for(let i = 1; i < m; i++){
+      const g = gapBoundary(sp[i - 1].e, sp[i].s);
+      ends[i - 1] = g[0];
+      starts[i] = g[1];
+    }
+    for(let i = 0; i < m; i++){
+      let s = starts[i], e = ends[i];
+      if(!(s < sp[i].e)) s = Math.min(sp[i].s, sp[i].e - CTC_HOP);
+      if(!(e > s)) e = s + CTC_HOP;
+      out[i] = { start: s, end: e };
+    }
+    return out;
+  }
+
+  // Words with nothing to say (a lone dash or emoji) get a zero-length slot, never the highlighted one.
+  function spreadToAllWords(n, idxs, refined){
+    const times = new Array(n);
+    for(let k = 0; k < idxs.length; k++) times[idxs[k]] = refined[k];
+    let nextStart = null;
+    for(let i = n - 1; i >= 0; i--){
+      if(times[i]) nextStart = times[i].start;
+      else if(nextStart !== null) times[i] = { start: nextStart, end: nextStart };
+    }
+    const tailEnd = refined[refined.length - 1].end;
+    for(let i = 0; i < n; i++){
+      if(!times[i]) times[i] = { start: tailEnd, end: tailEnd };
+      if(i > 0 && times[i].start < times[i - 1].start) times[i] = { start: times[i - 1].start, end: Math.max(times[i].end, times[i - 1].start) };
+    }
+    return times;
+  }
+
+  // Forced-align the caption words against the cached audio emissions.
+  function alignWordsToEmissions(words){
+    const em = ctcEmissions;
+    if(!em || !words.length) return null;
+    const toks = [], ranges = new Array(words.length);
+    for(let i = 0; i < words.length; i++){
+      const ids = wordToTokenIds(words[i], em.vocab, em.delim);
+      if(!ids.length){ ranges[i] = null; continue; }
+      if(toks.length) toks.push(em.delim);
+      ranges[i] = [toks.length, toks.length + ids.length - 1];
+      for(let k = 0; k < ids.length; k++) toks.push(ids[k]);
+    }
+    if(!toks.length) return null;
+    const path = ctcViterbi(em, toks);
+    if(!path) return null;
+    const spikes = [], idxs = [];
+    for(let i = 0; i < words.length; i++){
+      if(!ranges[i]) continue;
+      const a = path.first[ranges[i][0]], b = path.last[ranges[i][1]];
+      if(a < 0 || b < 0) continue;
+      spikes.push({ s: a * CTC_HOP + AUDIO_LEAD_PAD, e: (b + 1) * CTC_HOP + AUDIO_LEAD_PAD });
+      idxs.push(i);
+    }
+    if(!spikes.length) return null;
+    return { times: spreadToAllWords(words.length, idxs, refineBounds(spikes)), conf: path.conf };
+  }
+
+  // ----- fallback: Whisper word timestamps mapped onto the caption words -----
+  function normCmp(s){ return String(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, ''); }
+
+  function lev(a, b){
+    const m = a.length, n = b.length;
+    let prev = new Array(n + 1), cur = new Array(n + 1);
+    for(let j = 0; j <= n; j++) prev[j] = j;
+    for(let i = 1; i <= m; i++){
+      cur[0] = i;
+      for(let j = 1; j <= n; j++){
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+      const t = prev; prev = cur; cur = t;
+    }
+    return prev[n];
+  }
+
+  function wordSim(a, b){
+    if(a === b) return a ? 3 : 0;
+    const mx = Math.max(a.length, b.length);
+    if(mx < 3) return -2;
+    return (1 - lev(a, b) / mx) >= 0.6 ? 1 : -2;
   }
 
   function wordWeight(w){
     return w.replace(/[^\p{L}\p{N}\p{M}]/gu, '').length + 1.2;
   }
 
-  // For edited text (word count no longer matches Whisper): spread words over voiced time by length.
-  function proportionalWordTimes(words){
-    const wts = words.map(wordWeight);
-    const total = wts.reduce(function(a, x){ return a + x; }, 0);
-    const V = voice.prefix[voice.n] * VOICE_HOP;
-    let acc = 0;
-    return words.map(function(w, i){
-      const s = acc / total * V;
-      acc += wts[i];
-      return { start: timeAtVoiced(s, true), end: timeAtVoiced(acc / total * V, false) };
-    });
+  function mapWhisperToWords(words){
+    const W = wordTimestamps;
+    if(!W || !W.length || !words.length) return null;
+    const n = words.length, m = W.length, C = m + 1, GAP = -1;
+    const A = words.map(normCmp), B = W.map(function(w){ return normCmp(w.text); });
+    const score = new Float32Array((n + 1) * C), tb = new Uint8Array((n + 1) * C);
+    for(let i = 1; i <= n; i++){ score[i * C] = i * GAP; tb[i * C] = 1; }
+    for(let j = 1; j <= m; j++){ score[j] = j * GAP; tb[j] = 2; }
+    for(let i = 1; i <= n; i++){
+      for(let j = 1; j <= m; j++){
+        const diag = score[(i - 1) * C + j - 1] + wordSim(A[i - 1], B[j - 1]);
+        const up = score[(i - 1) * C + j] + GAP;
+        const left = score[i * C + j - 1] + GAP;
+        let best = diag, t = 0;
+        if(up > best){ best = up; t = 1; }
+        if(left > best){ best = left; t = 2; }
+        score[i * C + j] = best; tb[i * C + j] = t;
+      }
+    }
+    const anchor = new Array(n).fill(null);
+    let i = n, j = m;
+    while(i > 0 || j > 0){
+      const t = (i === 0) ? 2 : (j === 0 ? 1 : tb[i * C + j]);
+      if(t === 0){
+        if(wordSim(A[i - 1], B[j - 1]) > 0) anchor[i - 1] = W[j - 1];
+        i--; j--;
+      } else if(t === 1) i--; else j--;
+    }
+    if(!anchor.some(Boolean)) return null;
+
+    const times = new Array(n);
+    for(let k = 0; k < n; k++) if(anchor[k]) times[k] = { start: anchor[k].start, end: Math.max(anchor[k].end, anchor[k].start) };
+    for(let k = 0; k < n; ){
+      if(times[k]){ k++; continue; }
+      let e = k;
+      while(e + 1 < n && !times[e + 1]) e++;
+      const left = k > 0 ? times[k - 1].end : (voice ? voice.firstTime : AUDIO_LEAD_PAD);
+      let right = e < n - 1 ? times[e + 1].start : (voice ? voice.lastTime : AUDIO_LEAD_PAD + narrationDuration);
+      if(right < left) right = left;
+      let total = 0;
+      for(let q = k; q <= e; q++) total += wordWeight(words[q]);
+      let acc = 0;
+      for(let q = k; q <= e; q++){
+        const s = left + (right - left) * acc / total;
+        acc += wordWeight(words[q]);
+        times[q] = { start: s, end: left + (right - left) * acc / total };
+      }
+      k = e + 1;
+    }
+    for(let k = 1; k < n; k++) if(times[k].start < times[k - 1].start) times[k].start = times[k - 1].start;
+    return times;
   }
 
+  // ----- pick the best timing source for the current caption text (cached per text) -----
+  function getWordTimes(words){
+    const key = words.join(' ');
+    if(wordTimesCache && wordTimesCache.key === key && wordTimesCache.ver === alignVersion) return wordTimesCache.result;
+    let result = { mode: 'none', times: null, conf: 0 };
+    if(ctcEmissions){
+      try{
+        const a = alignWordsToEmissions(words);
+        if(a) result = { mode: 'exact', times: a.times, conf: a.conf };
+      }catch(err){ console.warn('Forced alignment failed, using fallback:', err); }
+    }
+    if(!result.times && wordTimestamps && wordTimestamps.length){
+      const t = mapWhisperToWords(words);
+      if(t) result = { mode: 'whisper', times: t, conf: 0 };
+    }
+    wordTimesCache = { key: key, ver: alignVersion, result: result };
+    return result;
+  }
+
+  function invalidateWordTimes(){ alignVersion++; wordTimesCache = null; layoutCache = null; }
+
+  // ----- caption screens: max N words, broken on sentence end > comma > real pause -----
   function buildScreenPlan(words){
     const n = words.length, MAXW = MAX_WORDS_PER_CHUNK;
-    let times = null;
-    if(wordTimestamps && wordTimestamps.length === n) times = wordTimestamps;
-    else if(voice && n) times = proportionalWordTimes(words);
-
+    const sync = n ? getWordTimes(words) : { mode: 'none', times: null, conf: 0 };
+    const times = sync.times;
     const screens = [];
     if(!times){
       for(let i = 0; i < n; i += MAXW) screens.push({ first: i, last: Math.min(n, i + MAXW) - 1 });
     } else {
-      // pause-aware split: break on sentence end > comma > real silence, max MAXW words, no tiny screens
       let i = 0;
       while(i < n){
         const maxJ = Math.min(n - 1, i + MAXW - 1);
@@ -910,9 +1096,7 @@
           } else {
             const w = words[j];
             sc = /[.!?\u2026]["'\u201d\u2019)\]]*$/.test(w) ? 3 : (/[,;:\u2014\u2013-]["'\u201d\u2019)\]]*$/.test(w) ? 1.5 : 0);
-            const gap = voice ? voiceSilenceIn(times[j].end - 0.1, times[j + 1].start + 0.1)
-                              : Math.max(0, times[j + 1].start - times[j].end);
-            sc += Math.min(gap, 0.5) * 5;
+            sc += Math.min(Math.max(0, times[j + 1].start - times[j].end), 0.5) * 5;
             if(tail < 3) sc -= 2;                       // don't leave a 1-2 word orphan screen
             if(cnt < MIN_SCREEN_WORDS) sc -= 3;
           }
@@ -922,70 +1106,150 @@
         screens.push({ first: i, last: bestJ });
         i = bestJ + 1;
       }
-      // screen start = first word's time, snapped to the nearest real speech onset
-      screens.forEach(function(sc){
-        let st = times[sc.first].start;
-        if(voice){
-          let best = null, bd = SNAP_WINDOW;
-          for(let k = 0; k < voice.onsets.length; k++){
-            const d = Math.abs(voice.onsets[k] - st);
-            if(d <= bd){ bd = d; best = voice.onsets[k]; }
-          }
-          if(best !== null) st = best;
-        }
-        sc.start = st;
-      });
-      for(let k = 1; k < screens.length; k++){
-        const prev = screens[k - 1].start;
-        screens[k].start = Math.max(prev + 0.1, screens[k].start - SCREEN_LEAD);
-      }
-      screens.forEach(function(sc, k){
-        if(k < screens.length - 1) sc.end = screens[k + 1].start;
-        else sc.end = Math.max(sc.start + 0.2, voice ? voice.lastTime : times[sc.last].end);
-      });
     }
-
     const screenOfWord = new Int32Array(n);
-    screens.forEach(function(sc, k){
-      let acc = 0;
-      const cum = [];
-      for(let w = sc.first; w <= sc.last; w++){ screenOfWord[w] = k; acc += wordWeight(words[w]); cum.push(acc); }
-      sc.cum = cum.map(function(x){ return x / acc; });
-      if(times && voice){ sc.va = voicedAt(sc.start); sc.vb = voicedAt(sc.end); }
-    });
-    return { screens: screens, screenOfWord: screenOfWord, timed: !!times };
+    screens.forEach(function(sc, k){ for(let w = sc.first; w <= sc.last; w++) screenOfWord[w] = k; });
+    return { screens: screens, screenOfWord: screenOfWord, times: times, mode: sync.mode, conf: sync.conf, timed: !!times };
   }
 
-  function wordAtTime(plan, t){
-    const S = plan.screens;
-    if(!S.length) return 0;
-    if(t < S[0].start) return S[0].first;
-    let lo = 0, hi = S.length - 1;
+  // highlighted word = last word whose own start time has passed
+  function wordIndexAt(times, t){
+    if(!times.length || t < times[0].start) return 0;
+    let lo = 0, hi = times.length - 1;
     while(lo < hi){
       const mid = (lo + hi + 1) >> 1;
-      if(S[mid].start <= t) lo = mid; else hi = mid - 1;
+      if(times[mid].start <= t) lo = mid; else hi = mid - 1;
     }
-    const sc = S[lo];
-    let frac;
-    if(voice && sc.vb - sc.va > 1e-4) frac = (voicedAt(t) - sc.va) / (sc.vb - sc.va);
-    else frac = (t - sc.start) / Math.max(0.01, sc.end - sc.start);
-    frac = Math.max(0, Math.min(1, frac));
-    let k = 0;
-    while(k < sc.cum.length - 1 && sc.cum[k] <= frac) k++;
-    return sc.first + k;
+    return lo;
+  }
+
+  // ----- audio -> CTC emissions (chunked so long voiceovers stay light on memory) -----
+  const CTC_CORE = 160000, CTC_CTX = 24000, CTC_FRAME = 320, CTC_RF = 400;   // 10s core + 1.5s context each side (16kHz samples, all multiples of 320)
+
+  function logSoftmaxRow(src, off, V, dst, dOff){
+    let mx = -Infinity;
+    for(let k = 0; k < V; k++) if(src[off + k] > mx) mx = src[off + k];
+    let sum = 0;
+    for(let k = 0; k < V; k++) sum += Math.exp(src[off + k] - mx);
+    const lse = mx + Math.log(sum);
+    for(let k = 0; k < V; k++) dst[dOff + k] = src[off + k] - lse;
+  }
+
+  // runChunk(rawSamples, startSample) -> Promise<{ data: Float32Array logits, T, V }>
+  async function computeEmissions(samples, runChunk, onProgress){
+    const N = samples.length;
+    if(N < CTC_RF + CTC_FRAME) return null;
+    const F = Math.floor((N - CTC_RF) / CTC_FRAME) + 1;
+    const chunks = Math.ceil(N / CTC_CORE);
+    let V = 0, data = null;
+    for(let c = 0, a = 0; a < N; c++, a += CTC_CORE){
+      const b = Math.min(N, a + CTC_CORE);
+      const s = Math.max(0, a - CTC_CTX), e = Math.min(N, b + CTC_CTX);
+      if(onProgress) onProgress(c, chunks);
+      const out = await runChunk(samples.subarray(s, e), s);
+      if(!data){ V = out.V; data = new Float32Array(F * V); }
+      const g0 = a / CTC_FRAME, g1 = (b === N) ? F : Math.min(F, b / CTC_FRAME);
+      for(let g = g0; g < g1; g++){
+        const local = g - s / CTC_FRAME;
+        if(local < 0 || local >= out.T) continue;
+        logSoftmaxRow(out.data, local * V, V, data, g * V);
+      }
+    }
+    return { data: data, F: F, V: V };
   }
 
   function getWords(){
     return paragraphInput.value.trim().split(/\s+/).filter(Boolean);
   }
 
-  // ---------- Auto-transcribe an attached narration audio track (client-side Whisper) ----------
+  // ---------- Auto-transcribe + exact word alignment of an attached narration track (all client-side) ----------
+  const TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+  const CTC_MODEL_ID = 'Xenova/wav2vec2-base-960h';   // character-level CTC model used only for timing (forced alignment)
+  const CTC_VOCAB_FALLBACK = {'<pad>':0,'<s>':1,'</s>':2,'<unk>':3,'|':4,E:5,T:6,A:7,O:8,N:9,I:10,H:11,S:12,R:13,D:14,L:15,U:16,
+    M:17,W:18,C:19,F:20,G:21,Y:22,P:23,B:24,V:25,K:26,"'":27,X:28,J:29,Q:30,Z:31};
+
+  function getTransformers(){
+    if(!transformersPromise){
+      transformersPromise = import(TRANSFORMERS_URL);
+      transformersPromise.catch(function(){ transformersPromise = null; });
+    }
+    return transformersPromise;
+  }
+
   function getWhisperPipeline(){
     if(!whisperPipelinePromise){
-      whisperPipelinePromise = import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2')
+      whisperPipelinePromise = getTransformers()
         .then(function(mod){ return mod.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en'); });
+      whisperPipelinePromise.catch(function(){ whisperPipelinePromise = null; });
     }
     return whisperPipelinePromise;
+  }
+
+  function getCtcModel(mod){
+    if(!ctcModelPromise){
+      ctcModelPromise = mod.AutoModelForCTC.from_pretrained(CTC_MODEL_ID, {
+        quantized: true,
+        progress_callback: function(p){
+          if(p && p.status === 'progress' && typeof p.progress === 'number' && /onnx/i.test(p.file || '')){
+            transcribeStatus.textContent = 'Exact-sync model download ho raha hai: ' + Math.round(p.progress) + '% (sirf pehli baar)';
+          }
+        }
+      });
+      ctcModelPromise.catch(function(){ ctcModelPromise = null; });
+    }
+    return ctcModelPromise;
+  }
+
+  // The model's own label list, so letter -> id can never drift from what the model outputs.
+  async function loadCtcVocab(){
+    if(ctcVocabCache) return ctcVocabCache;
+    let v = null;
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(function(){ ctrl.abort(); }, 6000);
+      const res = await fetch('https://huggingface.co/' + CTC_MODEL_ID + '/resolve/main/vocab.json', { signal: ctrl.signal });
+      clearTimeout(timer);
+      if(res.ok){
+        const j = await res.json();
+        if(j && typeof j['|'] === 'number' && typeof j.E === 'number' && typeof j.Z === 'number') v = j;
+      }
+    }catch(e){ /* offline / blocked: built-in copy below is the same list */ }
+    ctcVocabCache = v || CTC_VOCAB_FALLBACK;
+    return ctcVocabCache;
+  }
+
+  async function runCtcChunk(mod, model, raw){
+    await new Promise(function(r){ setTimeout(r, 30); });      // let the status text paint before the heavy step
+    const n = raw.length;
+    let mean = 0;
+    for(let i = 0; i < n; i++) mean += raw[i];
+    mean /= n;
+    let v = 0;
+    for(let i = 0; i < n; i++){ const d = raw[i] - mean; v += d * d; }
+    const inv = 1 / Math.sqrt(v / n + 1e-7);
+    const x = new Float32Array(n);
+    for(let i = 0; i < n; i++) x[i] = (raw[i] - mean) * inv;
+    const out = await model({ input_values: new mod.Tensor('float32', x, [1, n]) });
+    const lg = out.logits;
+    return { data: lg.data, T: lg.dims[1], V: lg.dims[2] };
+  }
+
+  async function buildCtcEmissions(samples16k){
+    transcribeStatus.textContent = 'Exact-sync model load ho raha hai (pehli baar ~95MB)...';
+    const mod = await getTransformers();
+    const model = await getCtcModel(mod);
+    const vocab = await loadCtcVocab();
+    const em = await computeEmissions(samples16k, function(raw){ return runCtcChunk(mod, model, raw); }, function(c, n){
+      transcribeStatus.textContent = 'Exact sync: voiceover analyze ho raha hai (' + (c + 1) + '/' + n + ')...';
+    });
+    if(!em) throw new Error('audio too short for alignment');
+    let maxId = 0;
+    Object.keys(vocab).forEach(function(k){ if(vocab[k] > maxId) maxId = vocab[k]; });
+    if(maxId >= em.V) throw new Error('vocab does not match model output');
+    em.vocab = vocab;
+    em.blank = vocab['<pad>'] !== undefined ? vocab['<pad>'] : 0;
+    em.delim = vocab['|'];
+    return em;
   }
 
   async function decodeAudioFileToMono16k(file){
@@ -1058,50 +1322,91 @@
     }).join(' ');
   }
 
+  function refreshSyncStatus(edited){
+    if(!narrationAudio.src || !getWords().length) return;
+    const plan = getLayout().plan;
+    const n = getWords().length;
+    transcribeStatus.style.display = 'block';
+    if(plan.mode === 'exact'){
+      if(plan.conf < 0.5){
+        transcribeStatus.className = 'status-line error';
+        transcribeStatus.textContent = 'Yeh text voiceover se kaafi alag lag raha hai (sirf ' + Math.round(plan.conf * 100) +
+          '% match) \u2014 word-to-word sync ke liye wahi text rakho jo audio mein bola gaya hai.';
+      } else {
+        transcribeStatus.className = 'status-line ready';
+        transcribeStatus.textContent = edited
+          ? 'Text edit hua \u2014 audio ke saath dobara word-to-word exact align ho gaya \u2713'
+          : 'Exact word sync \u2713 \u2014 ' + n + ' words, har word audio se align (' + fmtTime(narrationDuration) + ').';
+      }
+    } else if(plan.mode === 'whisper'){
+      transcribeStatus.className = 'status-line';
+      transcribeStatus.textContent = exactSyncToggle.checked
+        ? 'Approx sync (Whisper timing) \u2014 exact-sync model load nahi ho paya, isliye highlight thoda aage/peeche ho sakta hai. Internet check karke audio dobara attach karein.'
+        : 'Exact word sync off hai, Whisper timing use ho rahi hai (approx). Word-to-word match ke liye checkbox on karke audio dobara attach karein.';
+    } else {
+      transcribeStatus.className = 'status-line';
+      transcribeStatus.textContent = 'Audio attached, lekin word timing nahi mil paayi \u2014 highlight barabar speed se chalega.';
+    }
+  }
+
   async function transcribeAudioFile(file){
     transcribing = true;
     updateExportReady();
-    audioDropLabel.textContent = file.name + ' — processing...';
+    audioDropLabel.textContent = file.name + ' \u2014 processing...';
     transcribeStatus.style.display = 'block';
     transcribeStatus.className = 'status-line';
     transcribeStatus.textContent = 'Audio decode ho raha hai...';
+    wordTimestamps = null;
+    ctcEmissions = null;
+    invalidateWordTimes();
     try{
       const decoded = await decodeAudioFileToMono16k(file);
       narrationDuration = decoded.duration;
       try{ voice = analyzeVoice(decoded.data, 16000, AUDIO_LEAD_PAD); }catch(vErr){ console.warn('Voice analysis skipped:', vErr); voice = null; }
-      transcribeStatus.textContent = 'Speech model load ho raha hai (pehli baar ~40-70MB, thoda time lagega)...';
-      const transcriber = await getWhisperPipeline();
-      transcribeStatus.textContent = 'Transcribe ho raha hai...';
-      const output = await transcriber(decoded.data, { return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
-      const chunks = (output.chunks || []).filter(function(c){ return c.text && c.text.trim(); });
 
-      // Whisper transcribes long audio in ~30s chunks and stitches the word timestamps back
-      // together; each chunk's internal clock can be fractionally off real time, and that small
-      // error compounds chunk after chunk — which is exactly why the highlight tracks fine at
-      // the start of a clip and drifts further behind/ahead as the narration goes on. Fix: scale
-      // every timestamp so the *last* detected word lines up with the audio's real, measured
-      // duration — this removes the compounding drift across the whole timeline, not just a
-      // fixed offset at one point. Clamped so a bad/partial transcript can't overcorrect wildly.
-      let driftScale = 1;
-      if(chunks.length){
-        const lastChunk = chunks[chunks.length - 1];
-        const lastEnd = (lastChunk.timestamp[1] != null ? lastChunk.timestamp[1] : lastChunk.timestamp[0]);
-        // target = where the voice really ends (trailing silence must not stretch the timeline)
-        const driftTarget = voice ? Math.max(0.1, voice.lastTime - AUDIO_LEAD_PAD) : narrationDuration;
-        if(lastEnd > 0.05) driftScale = Math.max(0.7, Math.min(1.3, driftTarget / lastEnd));
+      const wantExact = exactSyncToggle.checked;
+      const keepScript = useScriptToggle.checked && getWords().length > 0;   // caption box already holds the script -> it stays as is
+      let whisperText = null;
+
+      async function runWhisper(){
+        transcribeStatus.textContent = 'Speech model load ho raha hai (pehli baar ~40-70MB, thoda time lagega)...';
+        const transcriber = await getWhisperPipeline();
+        transcribeStatus.textContent = 'Transcribe ho raha hai...';
+        const output = await transcriber(decoded.data, { return_timestamps: 'word', chunk_length_s: 30, stride_length_s: 5 });
+        const chunks = (output.chunks || []).filter(function(c){ return c.text && c.text.trim(); });
+
+        // Whisper stitches ~30s chunks together and its clock can drift a little per chunk. Only matters for the
+        // fallback timing: scale so the last detected word lines up with where the voice really ends.
+        let driftScale = 1;
+        if(chunks.length){
+          const lastChunk = chunks[chunks.length - 1];
+          const lastEnd = (lastChunk.timestamp[1] != null ? lastChunk.timestamp[1] : lastChunk.timestamp[0]);
+          const driftTarget = voice ? Math.max(0.1, voice.lastTime - AUDIO_LEAD_PAD) : narrationDuration;
+          if(lastEnd > 0.05) driftScale = Math.max(0.7, Math.min(1.3, driftTarget / lastEnd));
+        }
+        wordTimestamps = chunks.map(function(c){
+          return {
+            text: c.text.trim(),
+            start: c.timestamp[0] * driftScale + AUDIO_LEAD_PAD,
+            end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) * driftScale + AUDIO_LEAD_PAD
+          };
+        });
+        whisperText = (output.text || '').trim();
       }
 
-      // +AUDIO_LEAD_PAD shifts every word so it still lines up once we pad the playback track with a silent lead-in second
-      wordTimestamps = chunks.map(function(c){
-        return {
-          text: c.text.trim(),
-          start: c.timestamp[0] * driftScale + AUDIO_LEAD_PAD,
-          end: (c.timestamp[1] != null ? c.timestamp[1] : c.timestamp[0]) * driftScale + AUDIO_LEAD_PAD
-        };
-      });
-
-      paragraphInput.value = toProperCase((output.text || '').trim());
-      layoutCache = null;
+      // Whisper is needed for the text (unless the caption box already has the script) and as a fallback timing source.
+      if(!(wantExact && keepScript)) await runWhisper();
+      if(wantExact){
+        try{
+          ctcEmissions = await buildCtcEmissions(decoded.data);
+        }catch(exactErr){
+          console.warn('Exact word sync unavailable, falling back to Whisper timing:', exactErr);
+          ctcEmissions = null;
+          if(!wordTimestamps) await runWhisper();
+        }
+      }
+      if(!keepScript && whisperText !== null) paragraphInput.value = toProperCase(whisperText);
+      invalidateWordTimes();
 
       effectiveMaxSeconds = Math.min(MAX_TOTAL_SECONDS, AUDIO_LEAD_PAD + narrationDuration + AUDIO_TAIL_PAD);
       const paddedBuffer = padAudioBuffer(decoded.original);
@@ -1111,18 +1416,18 @@
       if(rawClipsCache) finalizeClips(rawClipsCache);
 
       audioDropLabel.textContent = file.name + ' attached';
-      transcribeStatus.className = 'status-line ready';
-      transcribeReadyMsg = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ') \u2014 ' +
-        (voice ? 'screens voice ke pauses se auto-sync \u2713. Text edit bhi kar sakte ho.' : 'voice pauses clearly detect nahi hue, basic auto-sync laga hai.');
-      transcribeStatus.textContent = transcribeReadyMsg;
-      setSyncOffset(voice ? 0 : 600);   // no VAD = old Whisper-only timing, which needed the +600ms nudge
+      const plan = getLayout().plan;
+      setSyncOffset(plan.mode === 'whisper' && !voice ? 600 : 0);   // exact mode needs no nudge; raw Whisper without VAD needed +600ms
+      refreshSyncStatus(false);
       syncRow.style.display = 'flex';
       syncOffsetEl.style.display = 'block';
       syncHintEl.style.display = 'block';
     }catch(err){
       console.error('Transcription failed:', err);
       wordTimestamps = null;
+      ctcEmissions = null;
       voice = null;
+      invalidateWordTimes();
       audioDropLabel.textContent = 'English audio track choose karein (optional, auto-transcribe)';
       transcribeStatus.className = 'status-line error';
       transcribeStatus.textContent = 'Auto-transcribe fail ho gaya (internet ya browser support issue). Neeche paragraph khud type kar sakte ho.';
@@ -1261,11 +1566,12 @@
   function currentWordIndex(){
     const words = getWords();
     if(!words.length) return 0;
-    const rawT = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
-    // "Highlight sync" slider = optional fine-tune: positive delays the screens/highlight, negative brings them earlier.
-    const t = rawT - (syncOffsetMs / 1000);
     const plan = getLayout().plan;
-    if(plan && plan.timed) return wordAtTime(plan, t);
+    if(plan && plan.times){
+      const rawT = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
+      // "Highlight sync" slider = optional fine-tune: positive delays the screens/highlight, negative brings them earlier.
+      return wordIndexAt(plan.times, rawT - (syncOffsetMs / 1000) + HIGHLIGHT_LEAD);
+    }
     return activeWordFor(totalElapsed(), effectiveDuration, words.length);
   }
 
@@ -1555,556 +1861,8 @@
 
       layoutCache = null;
       drawStaticFrame();
-      coverOnRatioChange();
     });
   });
-
-  // ---------- Cover maker: video ke ratio mein cover (video frame ya manual image) ----------
-  const COVER_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  const COVER_SWATCHES = ['#FFFFFF', '#3EE8AE', '#F2B705', '#FF8A3D', '#E5595C', '#FF6FB1', '#4DB8FF'];
-  const COVER_BG_SWATCHES = ['#000000', '#FFFFFF', '#3EE8AE', '#F2B705', '#FF8A3D', '#E5595C', '#FF6FB1', '#4DB8FF'];
-  const COVER_DARK_TEXT = '#0A0A0A';
-  const COVER_EXPORT_WIDTH = 1080;
-
-  const coverCanvas = document.getElementById('coverCanvas');
-  const coverCtx = coverCanvas.getContext('2d');
-  const coverWrap = document.getElementById('coverWrap');
-  const coverEmpty = document.getElementById('coverEmpty');
-  const coverRatioTag = document.getElementById('coverRatioTag');
-  const coverSourceSel = document.getElementById('coverSource');
-  const coverScrubWrap = document.getElementById('coverScrubWrap');
-  const coverScrub = document.getElementById('coverScrub');
-  const coverScrubTime = document.getElementById('coverScrubTime');
-  const coverImageInput = document.getElementById('coverImageInput');
-  const coverImageLabel = document.getElementById('coverImageLabel');
-  const coverTextInput = document.getElementById('coverText');
-  const coverFromCaptionBtn = document.getElementById('coverFromCaption');
-  const coverSizeRange = document.getElementById('coverSize');
-  const coverSizeVal = document.getElementById('coverSizeVal');
-  const coverSizeMinus = document.getElementById('coverSizeMinus');
-  const coverSizePlus = document.getElementById('coverSizePlus');
-  const coverSwatchesEl = document.getElementById('coverSwatches');
-  const coverOutlineChk = document.getElementById('coverOutline');
-  const coverWatermarkChk = document.getElementById('coverWatermark');
-  const coverDownloadBtn = document.getElementById('coverDownloadBtn');
-  const coverResetBtn = document.getElementById('coverReset');
-  const coverAlignLeftBtn = document.getElementById('coverAlignLeft');
-  const coverAlignCenterBtn = document.getElementById('coverAlignCenter');
-  const coverBgChk = document.getElementById('coverBgOn');
-  const coverBgOpts = document.getElementById('coverBgOpts');
-  const coverBgSwatchesEl = document.getElementById('coverBgSwatches');
-  const coverBgOpacityRange = document.getElementById('coverBgOpacity');
-  const coverBgOpacityVal = document.getElementById('coverBgOpacityVal');
-  const coverStatus = document.getElementById('coverStatus');
-
-  const coverVideo = document.createElement('video');
-  coverVideo.playsInline = true;
-  coverVideo.muted = true;
-  coverVideo.preload = 'auto';
-  const coverFrameCanvas = document.createElement('canvas');
-
-  let coverSrc = null;          // { el, w, h } — current background (image element or captured video frame)
-  let coverSrcUrl = null;       // url of the media clip currently selected (null for manual image)
-  let coverManualImg = null, coverManualName = '';
-  let coverLoadToken = 0;
-  let coverFontSize = null;     // null = auto-fit like the video caption; number = user-chosen size
-  let coverPosCustom = false;   // false = text sits in the bottom-third box like the video caption
-  let coverLeftFrac = 0, coverTopFrac = 0;
-  let coverWordColors = [];     // per word index: colour string or null (= default white)
-  let coverActiveColor = COVER_SWATCHES[1];
-  let coverAlign = 'left';      // 'left' | 'center'
-  let coverBgColor = COVER_BG_SWATCHES[0];
-  let coverBgOpacity = 1;
-  let coverDrag = null;
-  let coverLast = null;         // { L, pos } from the latest render — used for hit-testing
-
-  function coverTokenize(){
-    let idx = 0;
-    const paras = [];
-    coverTextInput.value.split(/\r?\n/).forEach(function(line){
-      const ws = line.trim().split(/\s+/).filter(Boolean);
-      if(ws.length) paras.push(ws.map(function(t){ return { text: t, index: idx++ }; }));
-    });
-    return { paras: paras, count: idx };
-  }
-
-  function coverBuildLayout(context, W, H){
-    const tok = coverTokenize();
-    if(!tok.count) return null;
-    const maxWidth = W - LEFT_PAD - RIGHT_PAD;
-    const boxHeight = H / 3;
-
-    function layoutAt(size){
-      context.font = '700 ' + size + 'px ' + COVER_FONT;
-      let lines = [];
-      tok.paras.forEach(function(p){ lines = lines.concat(buildWordLayout(context, p, maxWidth)); });
-      return { size: size, lh: size * 1.35, lines: lines };
-    }
-
-    let L;
-    if(coverFontSize){
-      L = layoutAt(coverFontSize);
-    } else {
-      let s = 80;
-      L = layoutAt(s);
-      while(s > 32 && L.lines.length * L.lh > boxHeight - 44){ s -= 4; L = layoutAt(s); }
-    }
-    L.lineW = L.lines.map(function(line){
-      const last = line[line.length - 1];
-      return last.x + last.width;
-    });
-    const bw = L.lineW.reduce(function(m, w){ return Math.max(m, w); }, 0);
-    L.lineOff = L.lineW.map(function(w){ return coverAlign === 'center' ? (bw - w) / 2 : 0; });
-    L.blockW = bw;
-    L.blockH = L.lines.length * L.lh;
-    context.font = '700 ' + L.size + 'px ' + COVER_FONT;
-    return L;
-  }
-
-  function coverLuma(hex){
-    const n = parseInt(hex.slice(1), 16);
-    return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
-  }
-  // default word colour flips to dark when the chosen background is light, so text stays readable
-  function coverDefaultTextColor(){
-    return (coverBgChk.checked && coverBgOpacity >= 0.5 && coverLuma(coverBgColor) > 0.6) ? COVER_DARK_TEXT : '#FFFFFF';
-  }
-  function coverPadX(L){ return coverBgChk.checked ? L.size * 0.3 : 0; }
-
-  function coverRoundRect(c, x, y, w, h, r){
-    r = Math.min(r, w / 2, h / 2);
-    c.beginPath();
-    c.moveTo(x + r, y);
-    c.arcTo(x + w, y, x + w, y + h, r);
-    c.arcTo(x + w, y + h, x, y + h, r);
-    c.arcTo(x, y + h, x, y, r);
-    c.arcTo(x, y, x + w, y, r);
-    c.closePath();
-  }
-
-  function coverBlockPos(L, W, H){
-    let left, top;
-    if(coverPosCustom){ left = coverLeftFrac * W; top = coverTopFrac * H; }
-    else {
-      left = (coverAlign === 'center') ? (W - L.blockW) / 2 : LEFT_PAD;
-      top = (H - H/3) + (H/3 - L.blockH) / 2;
-    }
-    const pad = coverPadX(L);
-    left = Math.max(pad, Math.min(W - L.blockW - pad, left));
-    top = Math.max(0, Math.min(H - L.blockH, top));
-    return { left: left, top: top };
-  }
-
-  function coverDrawBase(context, W, H){
-    const targetAspect = W / H;
-    let sx, sy, sw, sh;
-    if(coverSrc.w / coverSrc.h > targetAspect){ sh = coverSrc.h; sw = sh * targetAspect; sx = (coverSrc.w - sw) / 2; sy = 0; }
-    else { sw = coverSrc.w; sh = sw / targetAspect; sx = 0; sy = (coverSrc.h - sh) / 2; }
-    context.drawImage(coverSrc.el, sx, sy, sw, sh, 0, 0, W, H);
-  }
-
-  // Draws the cover in logical W x H units (caller may pre-scale the context for a bigger export).
-  function coverRender(context, W, H, opts){
-    opts = opts || {};
-    const scale = opts.scale || 1;
-    context.save();
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = 'high';
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, W, H);
-    if(coverSrc) coverDrawBase(context, W, H);
-
-    const L = coverBuildLayout(context, W, H);
-    let result = null;
-    if(L){
-      const pos = coverBlockPos(L, W, H);
-      context.font = '700 ' + L.size + 'px ' + COVER_FONT;
-      context.textAlign = 'left';
-      context.textBaseline = 'alphabetic';
-      const outline = coverOutlineChk.checked;
-      const defColor = coverDefaultTextColor();
-
-      if(coverBgChk.checked){
-        const padX = coverPadX(L);
-        context.save();
-        context.globalAlpha = coverBgOpacity;
-        context.fillStyle = coverBgColor;
-        L.lines.forEach(function(lineWords, li){
-          const baseline = pos.top + li * L.lh + L.lh * 0.78;
-          coverRoundRect(context, pos.left + L.lineOff[li] - padX, baseline - L.size * 0.95, L.lineW[li] + padX * 2, L.size * 1.25, L.size * 0.18);
-          context.fill();
-        });
-        context.restore();
-      }
-
-      context.lineJoin = 'round';
-      context.miterLimit = 2;
-      context.lineWidth = L.size * 0.16;
-      context.strokeStyle = '#000';
-      L.lines.forEach(function(lineWords, li){
-        const y = pos.top + li * L.lh + L.lh * 0.78;
-        lineWords.forEach(function(w){
-          const x = pos.left + L.lineOff[li] + w.x;
-          const fill = coverWordColors[w.index] || defColor;
-          const stroke = outline && fill !== COVER_DARK_TEXT;
-          // thick dark outline + soft shadow (drawn first) keep the text readable on any image
-          context.shadowColor = 'rgba(0,0,0,0.6)';
-          context.shadowBlur = L.size * (stroke ? 0.14 : 0.08) * scale;
-          if(stroke) context.strokeText(w.text, x, y);
-          context.fillStyle = fill;
-          if(!stroke) context.fillText(w.text, x, y);
-          context.shadowColor = 'transparent';
-          context.shadowBlur = 0;
-          if(stroke) context.fillText(w.text, x, y);
-        });
-      });
-
-      if(opts.guides){
-        context.strokeStyle = 'rgba(255,255,255,0.7)';
-        context.lineWidth = 2;
-        context.setLineDash([10, 8]);
-        context.strokeRect(pos.left - 8, pos.top - 4, L.blockW + 16, L.blockH + 8);
-      }
-      result = { L: L, pos: pos };
-    }
-
-    if(coverWatermarkChk.checked) drawWatermarkTo(context, W);
-    context.restore();
-    return result;
-  }
-
-  function coverRedraw(){
-    coverLast = coverRender(coverCtx, CANVAS_W, CANVAS_H, { guides: !!(coverDrag && coverDrag.moved) });
-    if(!coverFontSize && coverLast){
-      coverSizeRange.value = coverLast.L.size;
-      coverSizeVal.textContent = coverLast.L.size;
-    }
-  }
-
-  function coverUpdateState(){
-    const has = !!coverSrc;
-    coverEmpty.style.display = has ? 'none' : 'flex';
-    coverDownloadBtn.disabled = !has;
-    if(!has) coverStatus.textContent = 'Cover ke liye media ya image chahiye.';
-    else if(!coverTokenize().count) coverStatus.textContent = 'Cover text likho, phir download karo.';
-    else coverStatus.textContent = 'Taiyaar — ' + COVER_EXPORT_WIDTH + 'px PNG download hoga.';
-    coverStatus.className = 'status-line' + (has ? ' ready' : '');
-    coverRedraw();
-  }
-
-  // ----- background source -----
-  function coverRefreshSources(){
-    const prev = coverSourceSel.value;
-    coverSourceSel.innerHTML = '';
-    displayClips.forEach(function(c, i){
-      const o = document.createElement('option');
-      o.value = 'clip:' + i;
-      o.textContent = (c.type === 'image' ? '🖼 ' : '🎬 ') + c.name;
-      coverSourceSel.appendChild(o);
-    });
-    if(coverManualImg){
-      const o = document.createElement('option');
-      o.value = 'manual';
-      o.textContent = '🖼 (apni image) ' + coverManualName;
-      coverSourceSel.appendChild(o);
-    }
-    if(!coverSourceSel.options.length){
-      const o = document.createElement('option');
-      o.textContent = 'Pehle media ya image chuno';
-      coverSourceSel.appendChild(o);
-      coverSourceSel.disabled = true;
-      coverSrc = null; coverSrcUrl = null;
-      coverScrubWrap.style.display = 'none';
-      coverUpdateState();
-      return;
-    }
-    coverSourceSel.disabled = false;
-
-    // same selection as before (e.g. media rebuilt after audio attach)? keep it, don't reload
-    if(prev === 'manual' && coverManualImg){ coverSourceSel.value = 'manual'; return; }
-    if(coverSrcUrl){
-      for(let i = 0; i < displayClips.length; i++){
-        if(displayClips[i].url === coverSrcUrl){ coverSourceSel.value = 'clip:' + i; return; }
-      }
-    }
-    coverSourceSel.selectedIndex = 0;
-    coverApplySource();
-  }
-
-  function coverApplySource(){
-    const v = coverSourceSel.value;
-    coverScrubWrap.style.display = 'none';
-    if(v === 'manual' && coverManualImg){
-      coverSrcUrl = null;
-      coverSrc = { el: coverManualImg, w: coverManualImg.naturalWidth, h: coverManualImg.naturalHeight };
-      coverUpdateState();
-      return;
-    }
-    if(v.indexOf('clip:') === 0){
-      const c = displayClips[parseInt(v.slice(5), 10)];
-      if(c && c.type === 'image' && c.img){
-        coverSrcUrl = c.url;
-        coverSrc = { el: c.img, w: c.img.naturalWidth, h: c.img.naturalHeight };
-        coverUpdateState();
-        return;
-      }
-      if(c && c.type === 'video'){ coverLoadVideo(c); return; }
-    }
-    coverSrc = null; coverSrcUrl = null;
-    coverUpdateState();
-  }
-
-  function coverLoadVideo(c){
-    const token = ++coverLoadToken;
-    let started = false;
-    coverSrcUrl = c.url;
-    const onReady = function(){
-      if(started || token !== coverLoadToken) return;
-      started = true;
-      const d = coverVideo.duration || c.rawDuration || 1;
-      const t0 = Math.min(1, d / 3);
-      coverScrub.max = d;
-      coverScrub.value = t0;
-      coverScrubTime.textContent = fmtTime(t0);
-      coverScrubWrap.style.display = 'block';
-      coverVideo.currentTime = t0;
-    };
-    coverVideo.onloadedmetadata = onReady;
-    coverVideo.onloadeddata = onReady;
-    coverVideo.src = c.url;
-    coverVideo.load();
-  }
-
-  coverVideo.addEventListener('seeked', function(){
-    const vw = coverVideo.videoWidth, vh = coverVideo.videoHeight;
-    if(!vw || !vh) return;
-    const k = Math.min(1, 1920 / Math.max(vw, vh));
-    coverFrameCanvas.width = Math.round(vw * k);
-    coverFrameCanvas.height = Math.round(vh * k);
-    coverFrameCanvas.getContext('2d').drawImage(coverVideo, 0, 0, coverFrameCanvas.width, coverFrameCanvas.height);
-    coverSrc = { el: coverFrameCanvas, w: coverFrameCanvas.width, h: coverFrameCanvas.height };
-    coverUpdateState();
-  });
-
-  coverSourceSel.addEventListener('change', coverApplySource);
-  coverScrub.addEventListener('input', function(){
-    const t = parseFloat(coverScrub.value) || 0;
-    coverScrubTime.textContent = fmtTime(t);
-    coverVideo.currentTime = t;
-  });
-
-  coverImageInput.addEventListener('change', function(e){
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    const img = new Image();
-    img.onload = function(){
-      coverManualImg = img;
-      coverManualName = f.name;
-      coverImageLabel.textContent = f.name;
-      coverRefreshSources();
-      coverSourceSel.value = 'manual';
-      coverApplySource();
-    };
-    img.onerror = function(){ coverStatus.className = 'status-line error'; coverStatus.textContent = 'Yeh image load nahi hui. Dusri file try karein.'; };
-    img.src = URL.createObjectURL(f);
-    coverImageInput.value = '';
-  });
-
-  // ----- text, size, colour -----
-  coverTextInput.addEventListener('input', coverUpdateState);
-  coverFromCaptionBtn.addEventListener('click', function(){
-    const words = getWords();
-    if(!words.length){ coverStatus.className = 'status-line'; coverStatus.textContent = 'Pehle upar caption paragraph likho.'; return; }
-    coverTextInput.value = words.slice(0, MAX_WORDS_PER_CHUNK).join(' ');
-    coverUpdateState();
-  });
-
-  function coverSetSize(v){
-    v = Math.max(28, Math.min(160, Math.round(v)));
-    coverFontSize = v;
-    coverSizeRange.value = v;
-    coverSizeVal.textContent = v;
-    coverRedraw();
-  }
-  coverSizeRange.addEventListener('input', function(){ coverSetSize(parseFloat(coverSizeRange.value)); });
-  coverSizeMinus.addEventListener('click', function(){ coverSetSize((coverFontSize || (coverLast ? coverLast.L.size : 72)) - 4); });
-  coverSizePlus.addEventListener('click', function(){ coverSetSize((coverFontSize || (coverLast ? coverLast.L.size : 72)) + 4); });
-
-  function coverMakeSwatches(container, colors, activeColor, customStart, onPick){
-    function choose(color, btn){
-      Array.prototype.forEach.call(container.querySelectorAll('.swatch'), function(b){
-        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
-      });
-      onPick(color);
-    }
-    colors.forEach(function(color){
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'swatch';
-      b.style.background = color;
-      b.setAttribute('aria-label', 'Colour ' + color);
-      b.setAttribute('aria-pressed', color === activeColor ? 'true' : 'false');
-      b.addEventListener('click', function(){ choose(color, b); });
-      container.appendChild(b);
-    });
-    const wrap = document.createElement('label');
-    wrap.className = 'swatch swatch-custom';
-    wrap.setAttribute('aria-label', 'Custom colour');
-    wrap.setAttribute('aria-pressed', 'false');
-    const inp = document.createElement('input');
-    inp.type = 'color';
-    inp.value = customStart;
-    inp.addEventListener('input', function(){ choose(inp.value, wrap); });
-    wrap.appendChild(inp);
-    container.appendChild(wrap);
-  }
-  coverMakeSwatches(coverSwatchesEl, COVER_SWATCHES, coverActiveColor, '#FFFFFF', function(c){ coverActiveColor = c; });
-  coverMakeSwatches(coverBgSwatchesEl, COVER_BG_SWATCHES, coverBgColor, '#7C3AED', function(c){ coverBgColor = c; coverRedraw(); });
-
-  coverBgChk.addEventListener('change', function(){
-    coverBgOpts.style.display = coverBgChk.checked ? 'block' : 'none';
-    coverRedraw();
-  });
-  coverBgOpacityRange.addEventListener('input', function(){
-    coverBgOpacity = (parseFloat(coverBgOpacityRange.value) || 100) / 100;
-    coverBgOpacityVal.textContent = Math.round(coverBgOpacity * 100) + '%';
-    coverRedraw();
-  });
-
-  // Left / Center: also snaps a dragged block to the left margin or the horizontal centre
-  function coverSetAlign(a){
-    coverAlign = a;
-    coverAlignLeftBtn.setAttribute('aria-pressed', a === 'left' ? 'true' : 'false');
-    coverAlignCenterBtn.setAttribute('aria-pressed', a === 'center' ? 'true' : 'false');
-    if(coverPosCustom && coverLast){
-      const left = (a === 'center') ? (CANVAS_W - coverLast.L.blockW) / 2 : LEFT_PAD;
-      coverLeftFrac = left / CANVAS_W;
-    }
-    coverRedraw();
-  }
-  coverAlignLeftBtn.addEventListener('click', function(){ coverSetAlign('left'); });
-  coverAlignCenterBtn.addEventListener('click', function(){ coverSetAlign('center'); });
-
-  coverOutlineChk.addEventListener('change', coverRedraw);
-  coverWatermarkChk.addEventListener('change', coverRedraw);
-
-  coverResetBtn.addEventListener('click', function(){
-    coverPosCustom = false;
-    coverFontSize = null;
-    coverWordColors = [];
-    coverRedraw();
-  });
-
-  // ----- drag text / tap word -----
-  function coverPoint(e){
-    const r = coverCanvas.getBoundingClientRect();
-    return { x: (e.clientX - r.left) * CANVAS_W / r.width, y: (e.clientY - r.top) * CANVAS_H / r.height };
-  }
-
-  function coverWordAt(p){
-    if(!coverLast) return null;
-    const L = coverLast.L, pos = coverLast.pos;
-    let li = Math.floor((p.y - pos.top) / L.lh);
-    li = Math.max(0, Math.min(L.lines.length - 1, li));
-    let best = null, bestDist = Infinity;
-    L.lines[li].forEach(function(w){
-      const x0 = pos.left + L.lineOff[li] + w.x, x1 = x0 + w.width;
-      const d = p.x < x0 ? x0 - p.x : (p.x > x1 ? p.x - x1 : 0);
-      if(d < bestDist){ bestDist = d; best = w; }
-    });
-    return best;
-  }
-
-  coverCanvas.addEventListener('pointerdown', function(e){
-    if(!coverLast || coverDrag) return;
-    const p = coverPoint(e);
-    const L = coverLast.L, pos = coverLast.pos, m = 30;
-    if(p.x < pos.left - m || p.x > pos.left + L.blockW + m || p.y < pos.top - m || p.y > pos.top + L.blockH + m) return;
-    e.preventDefault();
-    try{ coverCanvas.setPointerCapture(e.pointerId); }catch(err){}
-    coverDrag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, offX: p.x - pos.left, offY: p.y - pos.top, moved: false, tap: p };
-  });
-
-  coverCanvas.addEventListener('pointermove', function(e){
-    if(!coverDrag || e.pointerId !== coverDrag.id) return;
-    if(!coverDrag.moved){
-      if(Math.hypot(e.clientX - coverDrag.sx, e.clientY - coverDrag.sy) < 6) return;
-      coverDrag.moved = true;
-      coverCanvas.classList.add('dragging');
-    }
-    e.preventDefault();
-    const p = coverPoint(e), L = coverLast.L;
-    const pad = coverPadX(L);
-    const left = Math.max(pad, Math.min(CANVAS_W - L.blockW - pad, p.x - coverDrag.offX));
-    const top = Math.max(0, Math.min(CANVAS_H - L.blockH, p.y - coverDrag.offY));
-    coverPosCustom = true;
-    coverLeftFrac = left / CANVAS_W;
-    coverTopFrac = top / CANVAS_H;
-    coverRedraw();
-  });
-
-  function coverEndPointer(e){
-    if(!coverDrag || e.pointerId !== coverDrag.id) return;
-    const d = coverDrag;
-    coverDrag = null;
-    coverCanvas.classList.remove('dragging');
-    if(!d.moved && e.type === 'pointerup'){
-      const w = coverWordAt(d.tap);
-      if(w){
-        const cur = (coverWordColors[w.index] || coverDefaultTextColor()).toLowerCase();
-        coverWordColors[w.index] = (cur === coverActiveColor.toLowerCase()) ? null : coverActiveColor;
-      }
-    }
-    coverRedraw();
-  }
-  coverCanvas.addEventListener('pointerup', coverEndPointer);
-  coverCanvas.addEventListener('pointercancel', coverEndPointer);
-
-  // ----- ratio follows the video ratio switch -----
-  function coverOnRatioChange(){
-    coverCanvas.width = CANVAS_W;
-    coverCanvas.height = CANVAS_H;
-    coverWrap.style.aspectRatio = CANVAS_W + ' / ' + CANVAS_H;
-    coverRatioTag.textContent = (CANVAS_H === 1280) ? '9:16' : '4:5';
-    coverRedraw();
-  }
-
-  // ----- download (PNG, 1080px wide, same ratio as the video) -----
-  async function coverSaveBlob(blob, filename){
-    const downloads = (window.claude && typeof window.claude.use === 'function') ? await window.claude.use('downloads') : null;
-    if(downloads){
-      try{ await downloads.save({ filename: filename, data: blob }); return; }
-      catch(err){ if(err && err.code === 'declined') return; }
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-  }
-
-  coverDownloadBtn.addEventListener('click', function(){
-    if(!coverSrc) return;
-    const outW = COVER_EXPORT_WIDTH;
-    const outH = Math.round(outW * CANVAS_H / CANVAS_W);
-    const off = document.createElement('canvas');
-    off.width = outW; off.height = outH;
-    const c = off.getContext('2d');
-    c.scale(outW / CANVAS_W, outH / CANVAS_H);
-    coverRender(c, CANVAS_W, CANVAS_H, { scale: outW / CANVAS_W });
-    coverDownloadBtn.disabled = true;
-    off.toBlob(function(blob){
-      coverDownloadBtn.disabled = false;
-      if(!blob){ coverStatus.className = 'status-line error'; coverStatus.textContent = 'Cover save nahi ho paya. Dobara try karein.'; return; }
-      const name = 'cover-' + (CANVAS_H === 1280 ? '9x16' : '4x5') + '.png';
-      coverSaveBlob(blob, name);
-      coverStatus.className = 'status-line ready';
-      coverStatus.textContent = 'Cover saved — ' + name;
-    }, 'image/png');
-  });
-
-  coverOnRatioChange();
-  coverUpdateState();
 
   drawStaticFrame();
 })();
