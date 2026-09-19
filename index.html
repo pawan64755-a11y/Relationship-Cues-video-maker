@@ -166,7 +166,7 @@
       <label class="ratio-opt"><input type="radio" name="aspectRatio" value="9:16"><span>9:16 Reels/Shorts</span></label>
     </div>
     <div class="frame-wrap">
-      <canvas id="stageCanvas" width="720" height="900"></canvas>
+      <canvas id="stageCanvas" width="1080" height="1350"></canvas>
       <div class="frame-empty" id="frameEmpty">
         <div class="icon">▭</div>
         <div>Video/Image upload karne ke baad<br>preview yahan dikhega (4:5)</div>
@@ -207,9 +207,9 @@
       </label>
       <div class="status-line" id="transcribeStatus" style="display:none;"></div>
       <div class="field-row" id="syncRow" style="display:none;align-items:center;">
-        <span class="field-label" style="margin:0;">Highlight sync <span id="syncVal" style="color:var(--text);font-family:var(--mono);">+600ms</span></span>
+        <span class="field-label" style="margin:0;">Highlight sync <span id="syncVal" style="color:var(--text);font-family:var(--mono);">0ms</span></span>
       </div>
-      <input type="range" id="syncOffset" min="-600" max="600" step="10" value="600" style="display:none;">
+      <input type="range" id="syncOffset" min="-600" max="600" step="10" value="0" style="display:none;">
       <div class="hint" id="syncHint" style="display:none;margin:2px 0 0;">Agar highlight voiceover se aage/peeche chal raha hai, is slider se milaiye — right = highlight thoda der se (delay), left = jaldi (early).</div>
       <textarea id="paragraphInput" placeholder="Caption paragraph yahan likho..." style="margin-top:10px;"></textarea>
     </div>
@@ -307,12 +307,18 @@
 </div>
 
 <footer class="foot">
-  Sab browser mein hi process hota hai, koi upload nahi. Export webm/mp4 mein hota hai. <strong>Auto-transcribe</strong> ek baar Whisper model internet se load karta hai (~40-70MB) — Claude ke artifact preview mein sandbox ki wajah se kaam nahi karega, isliye yeh file khud host/open karke test karein.
+  Sab browser mein hi process hota hai, koi upload nahi. Export webm/mp4 mein hota hai, minimum 1080p (4:5 = 1080×1350, 9:16 = 1080×1920) aur 12 Mbps bitrate par. <strong>Auto-transcribe</strong> ek baar Whisper model internet se load karta hai (~40-70MB) — Claude ke artifact preview mein sandbox ki wajah se kaam nahi karega, isliye yeh file khud host/open karke test karein.
 </footer>
 
 <script>
 (function(){
-  let CANVAS_W = 720, CANVAS_H = 900;
+  let CANVAS_W = 720, CANVAS_H = 900;   // logical layout units (all layout/caption/cover maths stay in these)
+  // Output quality: pixels are rendered and recorded at 1080 wide (4:5 -> 1080x1350, 9:16 -> 1080x1920),
+  // i.e. minimum 1080p. Drawing code keeps using the 720-wide logical units; ctx is scaled by RENDER_SCALE.
+  const EXPORT_WIDTH = 1080;
+  const RENDER_SCALE = EXPORT_WIDTH / 720;
+  const VIDEO_BITRATE = 12000000;       // 12 Mbps - MediaRecorder's default (~2.5 Mbps) looks blocky at 1080p
+  const AUDIO_BITRATE = 192000;
   const WATERMARK_TEXT = 'Relationship Cues';
   const MAX_TOTAL_SECONDS = 59;
   const LEFT_PAD = 40;
@@ -446,6 +452,8 @@
   let globalElapsedBase = 0;
   let hasClips = false;
   let layoutCache = null;
+  let voice = null;            // auto voice analysis of the narration: {frames, prefix, onsets, n, offset, firstTime, lastTime} — null if speech/silence contrast is unclear
+  let transcribeReadyMsg = '';
   let rafId = null;
 
   let audioCtx = null, audioDestination = null, audioGraphReady = false;
@@ -453,6 +461,7 @@
   let mediaRecorder = null;
   let recordedChunks = [];
   let chosenMime = '';
+  let exportRes = '';
   let previewing = false;
 
   let imageClipStartAt = 0; // performance.now() when current image clip became active
@@ -461,8 +470,20 @@
   let transitionStart = 0;
 
   const snapCanvas = document.createElement('canvas');
-  snapCanvas.width = CANVAS_W; snapCanvas.height = CANVAS_H;
   const snapCtx = snapCanvas.getContext('2d');
+
+  function setupStageCtx(){
+    ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+  }
+  function applyCanvasResolution(){
+    const pw = Math.round(CANVAS_W * RENDER_SCALE), ph = Math.round(CANVAS_H * RENDER_SCALE);
+    canvas.width = pw; canvas.height = ph;          // resizing resets ctx state, so re-apply the transform
+    snapCanvas.width = pw; snapCanvas.height = ph;
+    setupStageCtx();
+  }
+  applyCanvasResolution();
 
   function fmtTime(s){
     s = Math.max(0, s || 0);
@@ -715,7 +736,7 @@
   }
 
   function captureSnapshot(){
-    snapCtx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    snapCtx.clearRect(0,0,snapCanvas.width,snapCanvas.height);
     snapCtx.drawImage(canvas, 0, 0);
     transitionSnapshot = snapCanvas;
   }
@@ -738,10 +759,15 @@
   // ---------- Caption text ----------
   paragraphInput.addEventListener('input', function(){
     layoutCache = null;
-    // manual edits can desync from the auto-detected word timings, so fall back to
-    // uniform timing the moment the user types — activeWordFor() already guards on
-    // word-count match, but clearing here keeps the "auto" badge accurate.
-    if(wordTimestamps && wordTimestamps.length !== getWords().length){
+    const mismatch = !!(wordTimestamps && wordTimestamps.length !== getWords().length);
+    if(voice && narrationAudio.src){
+      // Text edited: the per-word Whisper times no longer line up, but the voice analysis is still
+      // valid — screens are re-planned automatically from the real speech/pause layout.
+      transcribeStatus.className = 'status-line ready';
+      transcribeStatus.textContent = mismatch
+        ? 'Text edit hua \u2014 voice ke pauses ke hisaab se screens auto re-sync ho gayi.'
+        : transcribeReadyMsg;
+    } else if(mismatch){
       wordTimestamps = null;
       syncRow.style.display = 'none';
       syncOffsetEl.style.display = 'none';
@@ -756,6 +782,198 @@
     syncValEl.textContent = (syncOffsetMs > 0 ? '+' : '') + syncOffsetMs + 'ms';
     drawStaticFrame();
   });
+
+  function setSyncOffset(ms){
+    syncOffsetEl.value = ms;
+    syncOffsetMs = ms;
+    syncValEl.textContent = (ms > 0 ? '+' : '') + ms + 'ms';
+  }
+
+  // ---------- Auto sync engine: voice analysis (VAD) + pause-aware screens ----------
+  // Screen = unit. Each on-screen chunk is timed from the real speech in the audio: its start is
+  // snapped to the nearest real speech onset (after a pause), and the highlight inside a screen
+  // moves by word length over the *voiced* time only — so no per-word Whisper jitter, no drift.
+  const VOICE_HOP = 0.01;      // 10ms analysis frames
+  const SCREEN_LEAD = 0.08;    // caption appears a hair before the voice, easier to read
+  const SNAP_WINDOW = 0.30;    // max distance (s) a screen start may move to reach a real onset
+  const MIN_SCREEN_WORDS = 4;
+
+  function fillRuns(a, val, maxLen, to){
+    const n = a.length;
+    let i = 0;
+    while(i < n){
+      if(a[i] !== val){ i++; continue; }
+      let j = i;
+      while(j < n && a[j] === val) j++;
+      if(i > 0 && j < n && (j - i) < maxLen){ for(let k = i; k < j; k++) a[k] = to; }
+      i = j;
+    }
+  }
+
+  function analyzeVoice(samples, sr, offset){
+    const win = Math.round(sr * 0.02), hop = Math.round(sr * VOICE_HOP);
+    const n = Math.floor((samples.length - win) / hop) + 1;
+    if(n < 50) return null;
+    const db = new Float32Array(n);
+    for(let f = 0; f < n; f++){
+      let e = 0;
+      const o = f * hop;
+      for(let i = 0; i < win; i++){ const v = samples[o + i]; e += v * v; }
+      db[f] = 10 * Math.log10(e / win + 1e-10);
+    }
+    const sorted = Float32Array.from(db).sort();
+    const floor = sorted[Math.floor(n * 0.10)], peak = sorted[Math.floor(n * 0.95)];
+    if(peak - floor < 12) return null;               // no clear speech-vs-silence contrast: don't trust VAD
+    const thr = floor + Math.max(6, (peak - floor) * 0.28);
+    const frames = new Uint8Array(n);
+    for(let f = 0; f < n; f++) frames[f] = db[f] > thr ? 1 : 0;
+    fillRuns(frames, 0, 6, 1);                        // dips < 60ms inside speech = consonants, not pauses
+    fillRuns(frames, 1, 4, 0);                        // blips < 40ms = clicks/noise
+    const prefix = new Int32Array(n + 1);
+    const onsets = [];
+    let first = -1, last = -1;
+    for(let f = 0; f < n; f++){
+      prefix[f + 1] = prefix[f] + frames[f];
+      if(frames[f]){
+        if(first < 0) first = f;
+        last = f;
+        if(f === 0 || !frames[f - 1]) onsets.push(f * VOICE_HOP + offset);
+      }
+    }
+    if(first < 0) return null;
+    return { frames: frames, prefix: prefix, onsets: onsets, n: n, offset: offset,
+             firstTime: first * VOICE_HOP + offset, lastTime: (last + 1) * VOICE_HOP + offset };
+  }
+
+  function voiceSilenceIn(a, b){
+    if(!voice) return 0;
+    const f0 = Math.max(0, Math.floor((a - voice.offset) / VOICE_HOP));
+    const f1 = Math.min(voice.n, Math.ceil((b - voice.offset) / VOICE_HOP));
+    if(f1 <= f0) return 0;
+    return ((f1 - f0) - (voice.prefix[f1] - voice.prefix[f0])) * VOICE_HOP;
+  }
+
+  function voicedAt(t){                               // seconds of actual speech before time t
+    const x = Math.max(0, Math.min(voice.n, (t - voice.offset) / VOICE_HOP));
+    const i = Math.floor(x);
+    return (voice.prefix[i] + (i < voice.n ? (x - i) * voice.frames[i] : 0)) * VOICE_HOP;
+  }
+
+  function timeAtVoiced(v, isStart){                  // inverse of voicedAt
+    const target = v / VOICE_HOP;
+    let lo = 0, hi = voice.n;
+    while(lo < hi){
+      const mid = (lo + hi) >> 1;
+      const val = isStart ? voice.prefix[mid + 1] > target : voice.prefix[mid] >= target;
+      if(val) hi = mid; else lo = mid + 1;
+    }
+    return lo * VOICE_HOP + voice.offset;
+  }
+
+  function wordWeight(w){
+    return w.replace(/[^\p{L}\p{N}\p{M}]/gu, '').length + 1.2;
+  }
+
+  // For edited text (word count no longer matches Whisper): spread words over voiced time by length.
+  function proportionalWordTimes(words){
+    const wts = words.map(wordWeight);
+    const total = wts.reduce(function(a, x){ return a + x; }, 0);
+    const V = voice.prefix[voice.n] * VOICE_HOP;
+    let acc = 0;
+    return words.map(function(w, i){
+      const s = acc / total * V;
+      acc += wts[i];
+      return { start: timeAtVoiced(s, true), end: timeAtVoiced(acc / total * V, false) };
+    });
+  }
+
+  function buildScreenPlan(words){
+    const n = words.length, MAXW = MAX_WORDS_PER_CHUNK;
+    let times = null;
+    if(wordTimestamps && wordTimestamps.length === n) times = wordTimestamps;
+    else if(voice && n) times = proportionalWordTimes(words);
+
+    const screens = [];
+    if(!times){
+      for(let i = 0; i < n; i += MAXW) screens.push({ first: i, last: Math.min(n, i + MAXW) - 1 });
+    } else {
+      // pause-aware split: break on sentence end > comma > real silence, max MAXW words, no tiny screens
+      let i = 0;
+      while(i < n){
+        const maxJ = Math.min(n - 1, i + MAXW - 1);
+        let bestJ = maxJ, bestScore = -1e9;
+        for(let j = i; j <= maxJ; j++){
+          const cnt = j - i + 1, tail = n - 1 - j;
+          let sc;
+          if(j === n - 1){
+            sc = 3;
+          } else {
+            const w = words[j];
+            sc = /[.!?\u2026]["'\u201d\u2019)\]]*$/.test(w) ? 3 : (/[,;:\u2014\u2013-]["'\u201d\u2019)\]]*$/.test(w) ? 1.5 : 0);
+            const gap = voice ? voiceSilenceIn(times[j].end - 0.1, times[j + 1].start + 0.1)
+                              : Math.max(0, times[j + 1].start - times[j].end);
+            sc += Math.min(gap, 0.5) * 5;
+            if(tail < 3) sc -= 2;                       // don't leave a 1-2 word orphan screen
+            if(cnt < MIN_SCREEN_WORDS) sc -= 3;
+          }
+          sc += cnt * 0.03;
+          if(sc >= bestScore){ bestScore = sc; bestJ = j; }
+        }
+        screens.push({ first: i, last: bestJ });
+        i = bestJ + 1;
+      }
+      // screen start = first word's time, snapped to the nearest real speech onset
+      screens.forEach(function(sc){
+        let st = times[sc.first].start;
+        if(voice){
+          let best = null, bd = SNAP_WINDOW;
+          for(let k = 0; k < voice.onsets.length; k++){
+            const d = Math.abs(voice.onsets[k] - st);
+            if(d <= bd){ bd = d; best = voice.onsets[k]; }
+          }
+          if(best !== null) st = best;
+        }
+        sc.start = st;
+      });
+      for(let k = 1; k < screens.length; k++){
+        const prev = screens[k - 1].start;
+        screens[k].start = Math.max(prev + 0.1, screens[k].start - SCREEN_LEAD);
+      }
+      screens.forEach(function(sc, k){
+        if(k < screens.length - 1) sc.end = screens[k + 1].start;
+        else sc.end = Math.max(sc.start + 0.2, voice ? voice.lastTime : times[sc.last].end);
+      });
+    }
+
+    const screenOfWord = new Int32Array(n);
+    screens.forEach(function(sc, k){
+      let acc = 0;
+      const cum = [];
+      for(let w = sc.first; w <= sc.last; w++){ screenOfWord[w] = k; acc += wordWeight(words[w]); cum.push(acc); }
+      sc.cum = cum.map(function(x){ return x / acc; });
+      if(times && voice){ sc.va = voicedAt(sc.start); sc.vb = voicedAt(sc.end); }
+    });
+    return { screens: screens, screenOfWord: screenOfWord, timed: !!times };
+  }
+
+  function wordAtTime(plan, t){
+    const S = plan.screens;
+    if(!S.length) return 0;
+    if(t < S[0].start) return S[0].first;
+    let lo = 0, hi = S.length - 1;
+    while(lo < hi){
+      const mid = (lo + hi + 1) >> 1;
+      if(S[mid].start <= t) lo = mid; else hi = mid - 1;
+    }
+    const sc = S[lo];
+    let frac;
+    if(voice && sc.vb - sc.va > 1e-4) frac = (voicedAt(t) - sc.va) / (sc.vb - sc.va);
+    else frac = (t - sc.start) / Math.max(0.01, sc.end - sc.start);
+    frac = Math.max(0, Math.min(1, frac));
+    let k = 0;
+    while(k < sc.cum.length - 1 && sc.cum[k] <= frac) k++;
+    return sc.first + k;
+  }
 
   function getWords(){
     return paragraphInput.value.trim().split(/\s+/).filter(Boolean);
@@ -850,6 +1068,7 @@
     try{
       const decoded = await decodeAudioFileToMono16k(file);
       narrationDuration = decoded.duration;
+      try{ voice = analyzeVoice(decoded.data, 16000, AUDIO_LEAD_PAD); }catch(vErr){ console.warn('Voice analysis skipped:', vErr); voice = null; }
       transcribeStatus.textContent = 'Speech model load ho raha hai (pehli baar ~40-70MB, thoda time lagega)...';
       const transcriber = await getWhisperPipeline();
       transcribeStatus.textContent = 'Transcribe ho raha hai...';
@@ -867,7 +1086,9 @@
       if(chunks.length){
         const lastChunk = chunks[chunks.length - 1];
         const lastEnd = (lastChunk.timestamp[1] != null ? lastChunk.timestamp[1] : lastChunk.timestamp[0]);
-        if(lastEnd > 0.05) driftScale = Math.max(0.7, Math.min(1.3, narrationDuration / lastEnd));
+        // target = where the voice really ends (trailing silence must not stretch the timeline)
+        const driftTarget = voice ? Math.max(0.1, voice.lastTime - AUDIO_LEAD_PAD) : narrationDuration;
+        if(lastEnd > 0.05) driftScale = Math.max(0.7, Math.min(1.3, driftTarget / lastEnd));
       }
 
       // +AUDIO_LEAD_PAD shifts every word so it still lines up once we pad the playback track with a silent lead-in second
@@ -891,13 +1112,17 @@
 
       audioDropLabel.textContent = file.name + ' attached';
       transcribeStatus.className = 'status-line ready';
-      transcribeStatus.textContent = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ') — neeche text edit bhi kar sakte ho.';
+      transcribeReadyMsg = 'Transcript ready (' + wordTimestamps.length + ' words, ' + fmtTime(narrationDuration) + ') \u2014 ' +
+        (voice ? 'screens voice ke pauses se auto-sync \u2713. Text edit bhi kar sakte ho.' : 'voice pauses clearly detect nahi hue, basic auto-sync laga hai.');
+      transcribeStatus.textContent = transcribeReadyMsg;
+      setSyncOffset(voice ? 0 : 600);   // no VAD = old Whisper-only timing, which needed the +600ms nudge
       syncRow.style.display = 'flex';
       syncOffsetEl.style.display = 'block';
       syncHintEl.style.display = 'block';
     }catch(err){
       console.error('Transcription failed:', err);
       wordTimestamps = null;
+      voice = null;
       audioDropLabel.textContent = 'English audio track choose karein (optional, auto-transcribe)';
       transcribeStatus.className = 'status-line error';
       transcribeStatus.textContent = 'Auto-transcribe fail ho gaya (internet ya browser support issue). Neeche paragraph khud type kar sakte ho.';
@@ -957,20 +1182,17 @@
     return lines;
   }
 
-  function chunkWordsFn(words){
-    const chunks = [];
-    for(let i=0; i<words.length; i+=MAX_WORDS_PER_CHUNK){
-      chunks.push(words.slice(i, i+MAX_WORDS_PER_CHUNK).map((w, localIdx) => ({ text: w, index: i+localIdx })));
-    }
-    return chunks;
-  }
-
   function computeLayout(){
     const words = getWords();
     const boxTop = CANVAS_H - CANVAS_H/3;
     const boxHeight = CANVAS_H/3;
     const maxWidth = CANVAS_W - LEFT_PAD - RIGHT_PAD;
-    const rawChunks = chunkWordsFn(words);
+    const plan = buildScreenPlan(words);
+    const rawChunks = plan.screens.map(function(sc){
+      const arr = [];
+      for(let k = sc.first; k <= sc.last; k++) arr.push({ text: words[k], index: k });
+      return arr;
+    });
     let fontSize = 80;
     let chunkLines, lineHeight, maxLines;
 
@@ -982,7 +1204,7 @@
       if(maxLines * lineHeight <= boxHeight - 44) break;
       fontSize -= 4;
     }
-    return { fontSize, lineHeight, boxTop, boxHeight, chunks: chunkLines, wordCount: words.length };
+    return { fontSize, lineHeight, boxTop, boxHeight, chunks: chunkLines, wordCount: words.length, plan: plan };
   }
 
   function getLayout(){
@@ -992,9 +1214,9 @@
 
   // ---------- Drawing ----------
   function drawCaptionBox(activeWordIndex){
-    const { fontSize, lineHeight, boxTop, boxHeight, chunks, wordCount } = getLayout();
+    const { fontSize, lineHeight, boxTop, boxHeight, chunks, wordCount, plan } = getLayout();
     if(!wordCount) return;
-    const chunkIndex = Math.min(chunks.length - 1, Math.floor(activeWordIndex / MAX_WORDS_PER_CHUNK));
+    const chunkIndex = plan.screenOfWord[Math.max(0, Math.min(wordCount - 1, activeWordIndex))];
     const lines = chunks[chunkIndex];
     if(!lines || !lines.length) return;
 
@@ -1039,19 +1261,11 @@
   function currentWordIndex(){
     const words = getWords();
     if(!words.length) return 0;
-    if(wordTimestamps && wordTimestamps.length === words.length){
-      const rawT = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
-      // Whisper's word-level start times tend to land slightly ahead of the actual spoken
-      // word, which makes the highlight visibly race the voiceover — syncOffsetMs (adjustable
-      // via the "Highlight sync" slider) shifts playback time back before we look the word up,
-      // so a positive offset delays the highlight to match what's actually being said.
-      const t = rawT - (syncOffsetMs / 1000);
-      let idx = 0;
-      for(let i = 0; i < wordTimestamps.length; i++){
-        if(wordTimestamps[i].start <= t) idx = i; else break;
-      }
-      return idx;
-    }
+    const rawT = (narrationAudio.src && !narrationAudio.paused) ? narrationAudio.currentTime : totalElapsed();
+    // "Highlight sync" slider = optional fine-tune: positive delays the screens/highlight, negative brings them earlier.
+    const t = rawT - (syncOffsetMs / 1000);
+    const plan = getLayout().plan;
+    if(plan && plan.timed) return wordAtTime(plan, t);
     return activeWordFor(totalElapsed(), effectiveDuration, words.length);
   }
 
@@ -1135,6 +1349,7 @@
   }
 
   function drawStaticFrame(){
+    setupStageCtx();
     ctx.fillStyle = '#000';
     ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
 
@@ -1157,7 +1372,7 @@
         transitioning = false;
       } else {
         ctx.globalAlpha = 1 - p;
-        ctx.drawImage(transitionSnapshot, 0, 0);
+        ctx.drawImage(transitionSnapshot, 0, 0, CANVAS_W, CANVAS_H);
         ctx.globalAlpha = 1;
       }
     }
@@ -1266,7 +1481,12 @@
     }
 
     recordedChunks = [];
-    mediaRecorder = new MediaRecorder(combinedStream, { mimeType: chosenMime });
+    exportRes = canvas.width + '\u00d7' + canvas.height;
+    try{
+      mediaRecorder = new MediaRecorder(combinedStream, { mimeType: chosenMime, videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: AUDIO_BITRATE });
+    }catch(recErr){
+      mediaRecorder = new MediaRecorder(combinedStream, { mimeType: chosenMime });
+    }
     mediaRecorder.ondataavailable = function(e){ if(e.data && e.data.size > 0) recordedChunks.push(e.data); };
     mediaRecorder.onstop = finishExport;
 
@@ -1310,7 +1530,7 @@
     lastFilename = 'caption-video.' + ext;
     downloadBtn.disabled = false;
     downloadBtn.textContent = '⬇ Download Video';
-    downloadSize.textContent = (blob.size/1024/1024).toFixed(1) + ' MB · ' + ext.toUpperCase();
+    downloadSize.textContent = exportRes + ' · ' + (blob.size/1024/1024).toFixed(1) + ' MB · ' + ext.toUpperCase();
     downloadBox.style.display = 'block';
     progressFill.style.width = '100%';
     statusLine.className = 'status-line ready';
@@ -1330,10 +1550,7 @@
       if(this.value === '9:16'){ CANVAS_W = 720; CANVAS_H = 1280; }
       else { CANVAS_W = 720; CANVAS_H = 900; }
 
-      canvas.width = CANVAS_W;
-      canvas.height = CANVAS_H;
-      snapCanvas.width = CANVAS_W;
-      snapCanvas.height = CANVAS_H;
+      applyCanvasResolution();
       if(frameWrapEl) frameWrapEl.style.aspectRatio = CANVAS_W + ' / ' + CANVAS_H;
 
       layoutCache = null;
